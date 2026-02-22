@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "skills": {
+    "video-frames": {
+      "version": "1.0.0",
+      "installedAt": 1771734187772
+    },
+    "grammar": {
+      "version": "1.0.0",
+      "installedAt": 1771734199572
+    },
+    "image": {
+      "version": "1.0.3",
+      "installedAt": 1771734498747
+    },
+    "polymarketodds": {
+      "version": "1.0.0",
+      "installedAt": 1771734552988
+    },
+    "claw-shell": {
+      "version": "1.0.0",
+      "installedAt": 1771734556711
+    },
+    "video-subtitles": {
+      "version": "1.0.0",
+      "installedAt": 1771734741205
+    }
+  }
+}
