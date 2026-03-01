@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "skills": {
+    "ai-social-media-content": {
+      "source": "inference-sh-9/skills",
+      "sourceType": "github",
+      "computedHash": "5a631cc16180d7037b376a2a2cb3af9c573df1ae968d310f20200fee9aa0c378"
+    },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "063a0e6448123cd359ad0044cc46b0e490cc7964d45ef4bb9fd842bd2ffbca67"
+    },
+    "social-media-carousel": {
+      "source": "inference-sh-9/skills",
+      "sourceType": "github",
+      "computedHash": "dfb11a2359f6069f53685da6e47e05ead6699dc9193560b0ed9bdc4b3098ec0d"
+    },
+    "web-design-guidelines": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "computedHash": "a6a44d5498f7e8f68289902f3dedfc6f38ae0cee1e96527c80724cf27f727c2a"
+    }
+  }
+}
