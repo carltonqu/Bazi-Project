@@ -20,7 +20,33 @@ const FortuneRowSchema = z.object({
   advice: z.string(),
 });
 
+const CashflowSchema = z.object({
+  period: z.string(),
+  item: z.string(),
+  amountUsd: z.number(),
+  note: z.string(),
+});
+
+const FinancialActionSchema = z.object({
+  action: z.string(),
+  priority: z.enum(["High", "Medium", "Low"]),
+  impact: z.string(),
+});
+
+const ScenarioSchema = z.object({
+  name: z.string(),
+  probability: z.number().min(0).max(100),
+  outcome: z.string(),
+  nextStep: z.string(),
+});
+
 const FortuneOutputSchema = z.object({
+  report: z.object({
+    overview: z.string(),
+    cashflows: z.array(CashflowSchema),
+    financialActions: z.array(FinancialActionSchema),
+    scenarios: z.array(ScenarioSchema),
+  }),
   categories: z.object({
     aboutMyself: z.array(FortuneRowSchema),
     career: z.array(FortuneRowSchema),
@@ -43,7 +69,7 @@ const FortuneInputSchema = z.object({
 });
 
 function buildPrompt(input) {
-  return `You are an expert Bazi fortune consultant. Return ONLY valid JSON (no markdown).
+  return `You are an expert Bazi fortune consultant with practical finance planning ability. Return ONLY valid JSON (no markdown).
 
 User profile:
 - Name: ${input.name}
@@ -58,6 +84,18 @@ User profile:
 
 Output schema exactly:
 {
+  "report": {
+    "overview": "...",
+    "cashflows": [
+      {"period":"...","item":"...","amountUsd": 0,"note":"..."}
+    ],
+    "financialActions": [
+      {"action":"...","priority":"High","impact":"..."}
+    ],
+    "scenarios": [
+      {"name":"...","probability":0,"outcome":"...","nextStep":"..."}
+    ]
+  },
   "categories": {
     "aboutMyself": [{"topic":"...","reading":"...","advice":"..."}],
     "career": [{"topic":"...","reading":"...","advice":"..."}],
@@ -69,6 +107,8 @@ Output schema exactly:
 
 Rules:
 - Create 3 concise rows per category.
+- Create exactly 6 cashflows in USD, 4 financial actions, and 3 scenarios.
+- Probabilities across scenarios must sum to 100.
 - Keep content practical, empathetic, and specific to user life problem.
 - Do not include harmful, absolute, or deterministic claims.
 - JSON only.`;
