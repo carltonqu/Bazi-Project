@@ -36,6 +36,8 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("aboutMyself");
   const [lastCalculatedInput, setLastCalculatedInput] = useState(null);
   const [history, setHistory] = useState([]);
+  const [comparePrimaryId, setComparePrimaryId] = useState(null);
+  const [compareSecondaryIds, setCompareSecondaryIds] = useState([]);
 
   const hasUnsavedScenarioChanges = useMemo(() => {
     if (!fortune || !lastCalculatedInput) return false;
@@ -108,6 +110,34 @@ export default function App() {
 
   const handleRecalculateFromHistory = async (historyItem) => {
     await runScenarioCalculation({ mode: "recalculate", inputOverride: historyItem.input });
+  };
+
+  const handleCompareCardClick = (cardId) => {
+    if (!comparePrimaryId) {
+      setComparePrimaryId(cardId);
+      setCompareSecondaryIds([]);
+      return;
+    }
+
+    if (comparePrimaryId === cardId) {
+      setComparePrimaryId(null);
+      setCompareSecondaryIds([]);
+      return;
+    }
+
+    if (compareSecondaryIds.includes(cardId)) {
+      setCompareSecondaryIds((prev) => prev.filter((id) => id !== cardId));
+      return;
+    }
+
+    if (compareSecondaryIds.length < 2) {
+      setCompareSecondaryIds((prev) => [...prev, cardId]);
+    }
+  };
+
+  const clearCompareSelection = () => {
+    setComparePrimaryId(null);
+    setCompareSecondaryIds([]);
   };
 
   const closeModal = () => setIsModalOpen(false);
@@ -209,6 +239,16 @@ export default function App() {
               ))}
             </div>
 
+            <div className="compareBar">
+              <strong>Compare Scenarios</strong>
+              <span>
+                Pick 1 base card (green), then pick up to 2 more cards (yellow).
+              </span>
+              <button type="button" className="secondaryBtn" onClick={clearCompareSelection}>
+                Clear Selection
+              </button>
+            </div>
+
             <div className="tableWrap">
               <table>
                 <thead>
@@ -243,7 +283,17 @@ export default function App() {
               ) : (
                 <div className="historyGrid">
                   {history.map((item) => (
-                    <article className="historyCard" key={item.id}>
+                    <article
+                      className={`historyCard ${
+                        comparePrimaryId === item.id
+                          ? "comparePrimary"
+                          : compareSecondaryIds.includes(item.id)
+                            ? "compareSecondary"
+                            : ""
+                      }`}
+                      key={item.id}
+                      onClick={() => handleCompareCardClick(item.id)}
+                    >
                       <strong>{item.input.name || "Unnamed"}</strong>
                       <span>{new Date(item.timestamp).toLocaleString()}</span>
                       <span>{item.scenarioCount} scenario(s)</span>
@@ -251,7 +301,10 @@ export default function App() {
                         type="button"
                         className="secondaryBtn"
                         disabled={isRecalculating || loading}
-                        onClick={() => handleRecalculateFromHistory(item)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRecalculateFromHistory(item);
+                        }}
                       >
                         Recalculate Scenario
                       </button>

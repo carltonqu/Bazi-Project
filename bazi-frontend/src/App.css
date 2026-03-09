@@ -95,6 +95,21 @@ button:disabled {
   display: grid;
   gap: 0.45rem;
   background: #fafafa;
+  cursor: pointer;
+}
+
+.compareBar {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.comparePrimary {
+  border: 2px solid #16a34a;
+}
+
+.compareSecondary {
+  border: 2px solid #eab308;
 }
 
 .recalcModal {
