@@ -26,6 +26,11 @@ const tabLabelMap = {
 
 const isSameForm = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
+const parseProbability = (value) => {
+  const num = Number(String(value ?? "").replace("%", ""));
+  return Number.isFinite(num) ? num : 0;
+};
+
 export default function App() {
   const [formData, setFormData] = useState(initialForm);
   const [loading, setLoading] = useState(false);
@@ -77,12 +82,22 @@ export default function App() {
       setIsModalOpen(true);
       setActiveTab("aboutMyself");
 
+      const scenarios = nextFortune?.report?.scenarios || [];
+      const cashflows = nextFortune?.report?.cashflows || [];
+      const totalCashflowUsd = cashflows.reduce((sum, item) => sum + Number(item?.amountUsd || 0), 0);
+      const avgScenarioProbability =
+        scenarios.length > 0
+          ? scenarios.reduce((sum, item) => sum + parseProbability(item?.probability), 0) / scenarios.length
+          : 0;
+
       setHistory((prev) => [
         {
           id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
           timestamp: new Date().toISOString(),
           input: inputToUse,
-          scenarioCount: nextFortune?.report?.scenarios?.length || 0,
+          scenarioCount: scenarios.length,
+          totalCashflowUsd,
+          avgScenarioProbability,
         },
         ...prev,
       ]);
@@ -143,6 +158,24 @@ export default function App() {
   const closeModal = () => setIsModalOpen(false);
 
   const rows = fortune?.categories?.[activeTab] || [];
+
+  const comparedCards = useMemo(() => {
+    const selectedIds = [comparePrimaryId, ...compareSecondaryIds].filter(Boolean);
+    return selectedIds
+      .map((id) => history.find((item) => item.id === id))
+      .filter(Boolean);
+  }, [comparePrimaryId, compareSecondaryIds, history]);
+
+  const chartMax = useMemo(() => {
+    const scenarioMax = Math.max(1, ...comparedCards.map((c) => c.scenarioCount || 0));
+    const probabilityMax = Math.max(1, ...comparedCards.map((c) => c.avgScenarioProbability || 0));
+    const cashflowMax = Math.max(1, ...comparedCards.map((c) => c.totalCashflowUsd || 0));
+    return {
+      scenarioMax,
+      probabilityMax,
+      cashflowMax,
+    };
+  }, [comparedCards]);
 
   return (
     <div className="container">
@@ -248,6 +281,60 @@ export default function App() {
                 Clear Selection
               </button>
             </div>
+
+            {comparedCards.length > 0 && (
+              <div className="comparePanel">
+                <h3>Scenario Comparison Graph</h3>
+
+                <div className="graphBlock">
+                  <h4>Number of Scenarios</h4>
+                  {comparedCards.map((card) => (
+                    <div className="graphRow" key={`scenario-${card.id}`}>
+                      <span className="graphLabel">{card.input.name || "Unnamed"}</span>
+                      <div className="graphTrack">
+                        <div
+                          className={`graphBar ${comparePrimaryId === card.id ? "barPrimary" : "barSecondary"}`}
+                          style={{ width: `${((card.scenarioCount || 0) / chartMax.scenarioMax) * 100}%` }}
+                        />
+                      </div>
+                      <span className="graphValue">{card.scenarioCount || 0}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="graphBlock">
+                  <h4>Average Scenario Probability (%)</h4>
+                  {comparedCards.map((card) => (
+                    <div className="graphRow" key={`probability-${card.id}`}>
+                      <span className="graphLabel">{card.input.name || "Unnamed"}</span>
+                      <div className="graphTrack">
+                        <div
+                          className={`graphBar ${comparePrimaryId === card.id ? "barPrimary" : "barSecondary"}`}
+                          style={{ width: `${((card.avgScenarioProbability || 0) / chartMax.probabilityMax) * 100}%` }}
+                        />
+                      </div>
+                      <span className="graphValue">{(card.avgScenarioProbability || 0).toFixed(1)}%</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="graphBlock">
+                  <h4>Total Cashflow (USD)</h4>
+                  {comparedCards.map((card) => (
+                    <div className="graphRow" key={`cashflow-${card.id}`}>
+                      <span className="graphLabel">{card.input.name || "Unnamed"}</span>
+                      <div className="graphTrack">
+                        <div
+                          className={`graphBar ${comparePrimaryId === card.id ? "barPrimary" : "barSecondary"}`}
+                          style={{ width: `${((card.totalCashflowUsd || 0) / chartMax.cashflowMax) * 100}%` }}
+                        />
+                      </div>
+                      <span className="graphValue">${Number(card.totalCashflowUsd || 0).toFixed(0)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="tableWrap">
               <table>
