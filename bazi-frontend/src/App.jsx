@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "./config";
 import "./App.css";
@@ -24,47 +24,90 @@ const tabLabelMap = {
   lifeGoals: "Life Goals",
 };
 
+const isSameForm = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
 export default function App() {
   const [formData, setFormData] = useState(initialForm);
   const [loading, setLoading] = useState(false);
+  const [isRecalculating, setIsRecalculating] = useState(false);
   const [fortune, setFortune] = useState(null);
   const [error, setError] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("aboutMyself");
+  const [lastCalculatedInput, setLastCalculatedInput] = useState(null);
+  const [history, setHistory] = useState([]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  const hasUnsavedScenarioChanges = useMemo(() => {
+    if (!fortune || !lastCalculatedInput) return false;
+    return !isSameForm(formData, lastCalculatedInput);
+  }, [fortune, formData, lastCalculatedInput]);
 
   const getBirthWeekday = (birthDate) => {
     if (!birthDate) return "";
     return new Date(birthDate).toLocaleDateString("en-US", { weekday: "long" });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const runScenarioCalculation = async ({ mode = "generate", inputOverride = null } = {}) => {
+    const inputToUse = inputOverride || formData;
+
+    if (mode === "recalculate") {
+      setIsRecalculating(true);
+    } else {
+      setLoading(true);
+    }
+
     setError("");
-    setLoading(true);
 
     try {
       const payload = {
-        ...formData,
-        birthWeekday: getBirthWeekday(formData.birthDate),
+        ...inputToUse,
+        birthWeekday: getBirthWeekday(inputToUse.birthDate),
       };
 
       const res = await axios.post(`${API_BASE_URL}/api/fortune`, payload, {
         headers: { "Content-Type": "application/json" },
       });
 
-      setFortune(res.data);
+      const nextFortune = res.data;
+      setFortune(nextFortune);
+      setFormData(inputToUse);
+      setLastCalculatedInput(inputToUse);
       setIsModalOpen(true);
       setActiveTab("aboutMyself");
+
+      setHistory((prev) => [
+        {
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          timestamp: new Date().toISOString(),
+          input: inputToUse,
+          scenarioCount: nextFortune?.report?.scenarios?.length || 0,
+        },
+        ...prev,
+      ]);
     } catch (err) {
       setError(err?.response?.data?.message || "Failed to generate fortune.");
     } finally {
       setLoading(false);
+      setIsRecalculating(false);
     }
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await runScenarioCalculation({ mode: "generate" });
+  };
+
+  const handleRecalculateCurrent = async () => {
+    await runScenarioCalculation({ mode: "recalculate" });
+  };
+
+  const handleRecalculateFromHistory = async (historyItem) => {
+    await runScenarioCalculation({ mode: "recalculate", inputOverride: historyItem.input });
   };
 
   const closeModal = () => setIsModalOpen(false);
@@ -130,9 +173,15 @@ export default function App() {
           />
         </label>
 
-        <button type="submit" disabled={loading}>
+        <button type="submit" disabled={loading || isRecalculating}>
           {loading ? "Generating..." : "Generate Fortune"}
         </button>
+
+        {hasUnsavedScenarioChanges && (
+          <button type="button" className="secondaryBtn" onClick={handleRecalculateCurrent} disabled={isRecalculating || loading}>
+            Recalculate Scenario
+          </button>
+        )}
 
         {error && <p className="error">{error}</p>}
       </form>
@@ -186,7 +235,38 @@ export default function App() {
                 </tbody>
               </table>
             </div>
+
+            <div className="historySection">
+              <h3>Scenario History</h3>
+              {history.length === 0 ? (
+                <p className="subtitle">No history yet.</p>
+              ) : (
+                <div className="historyGrid">
+                  {history.map((item) => (
+                    <article className="historyCard" key={item.id}>
+                      <strong>{item.input.name || "Unnamed"}</strong>
+                      <span>{new Date(item.timestamp).toLocaleString()}</span>
+                      <span>{item.scenarioCount} scenario(s)</span>
+                      <button
+                        type="button"
+                        className="secondaryBtn"
+                        disabled={isRecalculating || loading}
+                        onClick={() => handleRecalculateFromHistory(item)}
+                      >
+                        Recalculate Scenario
+                      </button>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
+        </div>
+      )}
+
+      {isRecalculating && (
+        <div className="modalOverlay" role="status" aria-live="polite">
+          <div className="recalcModal">Recalculating scenario...</div>
         </div>
       )}
     </div>
