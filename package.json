@@ -8,7 +8,8 @@
     "test:manual": "tsx test/manual-cases.ts",
     "test:period": "tsx test/period-csv-cases.ts",
     "test:plan": "tsx test/store-plan-cases.ts",
-    "test:country": "tsx test/country-rules-cases.ts"
+    "test:country": "tsx test/country-rules-cases.ts",
+    "test:payroll": "tsx test/payroll-export-cases.ts"
   },
   "devDependencies": {
     "tsx": "^4.20.5",
