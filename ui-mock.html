@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShiftPay Lite UI Mock</title>
+  <style>
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#0b1020;color:#e8eefc;margin:0}
+    .wrap{max-width:1100px;margin:24px auto;padding:0 16px}
+    .grid{display:grid;grid-template-columns:280px 1fr;gap:16px}
+    .card{background:#151c33;border:1px solid #283253;border-radius:14px;padding:14px}
+    h1{font-size:20px;margin:0 0 12px}
+    h2{font-size:15px;margin:0 0 10px;color:#b8c6ef}
+    .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    .pill{background:#1d2644;border-radius:10px;padding:10px}
+    .pill b{display:block;font-size:18px}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    input,select,button{width:100%;padding:10px;border-radius:10px;border:1px solid #32406b;background:#0f1630;color:#e8eefc}
+    button{background:#4f7cff;border:none;font-weight:700;cursor:pointer}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th,td{padding:8px;border-bottom:1px solid #2a355b;text-align:left}
+    .ok{color:#78e08f}.warn{color:#ffd166}
+    .footer{margin-top:14px;font-size:12px;color:#9fb0e2}
+    .small{font-size:12px;color:#9fb0e2}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>ShiftPay Lite · MVP Interactive Preview</h1>
+  <div class="grid">
+    <div class="card">
+      <h2>Settings</h2>
+      <label>Language</label>
+      <select id="lang"><option value="en">English</option><option value="zh">中文</option></select>
+      <label>Country Rule</label>
+      <select id="country"><option value="US">US</option><option value="PH">PH</option><option value="AU">AU</option></select>
+      <div class="row" style="margin-top:10px">
+        <div><label>Currency</label><select id="currency"><option>USD</option><option>PHP</option><option>AUD</option></select></div>
+        <div><label>Hourly Rate</label><input id="rate" type="number" value="20"/></div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <div><label>OT Threshold(h/week)</label><input id="otThreshold" type="number" value="40"/></div>
+        <div><label>OT Multiplier</label><input id="otMul" type="number" step="0.01" value="1.5"/></div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <div><label>Night Start</label><input id="nightStart" value="22:00"/></div>
+        <div><label>Night End</label><input id="nightEnd" value="06:00"/></div>
+      </div>
+      <button style="margin-top:12px" id="applyRules">Apply Rules</button>
+      <div class="footer" id="disc">* Estimation tool, final payroll follows local law/contract.</div>
+    </div>
+
+    <div>
+      <div class="card">
+        <h2>Week Summary</h2>
+        <div class="kpi">
+          <div class="pill"><span>Total Hours</span><b id="kpiHours">0h</b></div>
+          <div class="pill"><span>Overtime</span><b id="kpiOt">0h</b></div>
+          <div class="pill"><span>Night Hours</span><b id="kpiNight">0h</b></div>
+          <div class="pill"><span>Estimated Pay</span><b id="kpiPay">$0.00</b></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <h2>Add Shift</h2>
+        <div class="row">
+          <input id="date" type="date"/>
+          <input id="timeRange" value="09:00-17:00"/>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <input id="breakMin" type="number" value="30"/>
+          <select id="dayType"><option value="normal">Normal</option><option value="holiday">Holiday</option></select>
+        </div>
+        <button style="margin-top:12px" id="addShift">Add Shift</button>
+        <div class="small">Time format: HH:MM-HH:MM (supports overnight, e.g. 22:00-06:00)</div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <h2>Shift Records</h2>
+        <table>
+          <thead><tr><th>Date</th><th>Time</th><th>Type</th><th>Hours</th><th>Pay</th><th>Action</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <h2>Payroll Export</h2>
+        <div class="row">
+          <select id="provider"><option value="GENERIC">GENERIC CSV</option><option value="ADP">ADP CSV</option><option value="GUSTO">GUSTO CSV</option></select>
+          <input id="emp" value="EMP-001"/>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <button id="exportPayroll">Export Payroll CSV</button>
+          <button style="background:#2f406f" id="exportShift">Export Shifts CSV</button>
+        </div>
+        <div class="footer"><span class="ok">Free:</span> latest 1 period · <span class="warn">Pro:</span> unlimited</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const presets={
+  US:{currency:'USD',ot:40,otMul:1.5,nightMul:1.1,holidayMul:2},
+  PH:{currency:'PHP',ot:40,otMul:1.25,nightMul:1.1,holidayMul:2},
+  AU:{currency:'AUD',ot:38,otMul:1.5,nightMul:1.15,holidayMul:2}
+};
+let shifts=[];
+let rule={...presets.US,rate:20};
+
+const $=id=>document.getElementById(id);
+function money(v){return new Intl.NumberFormat(undefined,{style:'currency',currency:$("currency").value}).format(v)}
+function parseMinutes(range){
+  const [a,b]=range.split('-').map(x=>x.trim());
+  const [ah,am]=a.split(':').map(Number); const [bh,bm]=b.split(':').map(Number);
+  let s=ah*60+am,e=bh*60+bm; if(e<=s)e+=24*60; return [s,e];
+}
+function isNight(min){
+  const ns=22*60, ne=6*60;
+  const m=min%(24*60);
+  return m>=ns || m<ne;
+}
+function recalc(){
+  let totalMin=0, nightMin=0, pay=0;
+  const otStart=Number($("otThreshold").value||40)*60;
+  const rate=Number($("rate").value||0)/60;
+  let rows='';
+  shifts.forEach((s,idx)=>{
+    const [st,en]=parseMinutes(s.range);
+    const raw=en-st;
+    const paid=Math.max(0,raw-s.breakMin);
+    let sp=0, sn=0;
+    for(let i=0;i<paid;i++){
+      const globalMin=totalMin+i;
+      const otMul=globalMin>=otStart?Number($("otMul").value||1.5):1;
+      const n=isNight(st+i)?rule.nightMul:1; if(n>1)sn++;
+      const h=s.type==='holiday'?rule.holidayMul:1;
+      sp += rate*otMul*n*h;
+    }
+    totalMin += paid;
+    nightMin += sn;
+    pay += sp;
+    rows += `<tr><td>${s.date}</td><td>${s.range}</td><td>${s.type}</td><td>${(paid/60).toFixed(2)}h</td><td>${money(sp)}</td><td><button onclick="delShift(${idx})">x</button></td></tr>`;
+  });
+  $("rows").innerHTML=rows;
+  const otMin=Math.max(0,totalMin-otStart);
+  $("kpiHours").textContent=(totalMin/60).toFixed(2)+'h';
+  $("kpiOt").textContent=(otMin/60).toFixed(2)+'h';
+  $("kpiNight").textContent=(nightMin/60).toFixed(2)+'h';
+  $("kpiPay").textContent=money(pay);
+}
+function delShift(i){shifts.splice(i,1);recalc()} window.delShift=delShift;
+
+$("country").addEventListener('change',()=>{
+  const p=presets[$("country").value];
+  $("currency").value=p.currency; $("otThreshold").value=p.ot; $("otMul").value=p.otMul;
+  rule={...rule,...p}; recalc();
+});
+$("applyRules").addEventListener('click',()=>recalc());
+$("addShift").addEventListener('click',()=>{
+  const date=$("date").value||new Date().toISOString().slice(0,10);
+  const range=$("timeRange").value;
+  if(!/^\d{2}:\d{2}\s*-\s*\d{2}:\d{2}$/.test(range)){alert('Invalid time range');return}
+  shifts.push({date,range,breakMin:Number($("breakMin").value||0),type:$("dayType").value});
+  recalc();
+});
+function download(name,text){
+  const blob=new Blob([text],{type:'text/csv'});const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download=name;a.click();URL.revokeObjectURL(a.href);
+}
+$("exportShift").addEventListener('click',()=>{
+  const csv=['date,range,breakMin,type',...shifts.map(s=>`${s.date},${s.range},${s.breakMin},${s.type}`)].join('\n');
+  download('shifts.csv',csv);
+});
+$("exportPayroll").addEventListener('click',()=>{
+  const emp=$("emp").value||'EMP-001';
+  const provider=$("provider").value;
+  let header=''; let rows=[];
+  if(provider==='ADP'){header='Employee ID,Date,Hours,Earnings Code,Notes';rows=shifts.map(s=>`${emp},${s.date},7.5,${s.type==='holiday'?'HOL':'REG'},`)}
+  else if(provider==='GUSTO'){header='employee_id,work_date,hours,job,memo';rows=shifts.map(s=>`${emp},${s.date},7.5,General,`)}
+  else {header='employeeId,date,range,breakMin,type';rows=shifts.map(s=>`${emp},${s.date},${s.range},${s.breakMin},${s.type}`)}
+  download(`payroll_${provider.toLowerCase()}.csv`,[header,...rows].join('\n'));
+});
+
+$("country").dispatchEvent(new Event('change'));
+</script>
+</body>
+</html>
