@@ -28,9 +28,16 @@ MVP for shift scheduling and wage calculation.
 - `test/manual-cases.ts` deterministic test scenarios
 - `docs/spec.md` product/logic specification
 
+## Progress
+- ✅ Core pay engine (regular/overtime/night/holiday)
+- ✅ Weekly period grouping
+- ✅ CSV export helpers
+- ✅ Plan gating logic (Free vs Pro period visibility)
+- ✅ Storage abstraction (in-memory + JSON file adapter)
+
 ## Next build steps
 1. Wrap engine into React Native UI screens
-2. Local persistence (SQLite)
-3. CSV import/export utilities
-4. IAP paywall (Free/Pro)
+2. Replace JSON adapter with SQLite on mobile
+3. CSV import parser + validation
+4. IAP paywall wiring (StoreKit product IDs)
 5. TestFlight packaging
