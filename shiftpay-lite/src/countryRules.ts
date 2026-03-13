@@ -5,6 +5,7 @@ export type CountryCode = 'US' | 'PH' | 'AU' | 'CUSTOM';
 export type CountryRulePreset = {
   code: CountryCode;
   name: string;
+  defaultCurrency: string;
   lastUpdated: string;
   note: string;
   rule: Omit<PayRule, 'currency' | 'baseHourlyRate'>;
@@ -15,6 +16,7 @@ export const COUNTRY_RULE_PRESETS: CountryRulePreset[] = [
   {
     code: 'US',
     name: 'United States (default federal-style estimate)',
+    defaultCurrency: 'USD',
     lastUpdated: '2026-03-13',
     note: 'Typical estimate: overtime after 40h/week, holiday rule configurable by employer/state.',
     rule: {
@@ -29,6 +31,7 @@ export const COUNTRY_RULE_PRESETS: CountryRulePreset[] = [
   {
     code: 'PH',
     name: 'Philippines (common estimate template)',
+    defaultCurrency: 'PHP',
     lastUpdated: '2026-03-13',
     note: 'Night differential commonly applied 10pm-6am; exact pay depends on day type and labor rules.',
     rule: {
@@ -43,6 +46,7 @@ export const COUNTRY_RULE_PRESETS: CountryRulePreset[] = [
   {
     code: 'AU',
     name: 'Australia (award-dependent estimate template)',
+    defaultCurrency: 'AUD',
     lastUpdated: '2026-03-13',
     note: 'Award/enterprise agreements vary; this is a baseline estimate only.',
     rule: {
@@ -63,12 +67,12 @@ export function getCountryPreset(code: CountryCode): CountryRulePreset | undefin
 export function buildPayRuleFromCountry(
   code: CountryCode,
   baseHourlyRate: number,
-  currency = 'USD',
+  currency?: string,
 ): PayRule {
   const preset = getCountryPreset(code);
   if (!preset) {
     return {
-      currency,
+      currency: currency ?? 'USD',
       baseHourlyRate,
       overtimeThresholdWeeklyHours: 40,
       overtimeMultiplier: 1.5,
@@ -80,7 +84,7 @@ export function buildPayRuleFromCountry(
   }
 
   return {
-    currency,
+    currency: currency ?? preset.defaultCurrency,
     baseHourlyRate,
     ...preset.rule,
   };
