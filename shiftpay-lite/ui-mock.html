@@ -85,6 +85,7 @@
           <button type="button" class="ghost tpl-btn" data-template="TUE_SAT">Tue-Sat</button>
           <button type="button" class="ghost tpl-btn" data-template="CUSTOM">Custom</button>
           <button type="button" id="applyTemplate">Apply Template</button>
+          <button type="button" class="secondary" id="saveWeek">Save Week</button>
         </div>
       </div>
     </div>
@@ -121,6 +122,12 @@
 
     <h4 style="margin:12px 0 6px;">Weekly calendar blocks</h4>
     <div id="weekCalendarGrid" style="display:grid;grid-template-columns:repeat(7,minmax(130px,1fr));gap:8px;"></div>
+
+    <h4 style="margin:12px 0 6px;">Weekly roster summary</h4>
+    <table>
+      <thead><tr><th>Employee</th><th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th></tr></thead>
+      <tbody id="weekSummaryRows"></tbody>
+    </table>
 
     <div class="card" style="margin-top:10px; background:#111833;">
       <h4 style="margin:0 0 8px;">Edit shift block</h4>
@@ -313,6 +320,20 @@ function renderWeekCalendar(){
       : `<button class="ghost" style="margin-top:6px;width:100%;text-align:left" onclick="editDay('${d}')">+ Add shift</button>`;
     return `<div class='card' style='padding:10px'><div><b>${dayName(idx)}</b></div><div class='small'>${d}</div>${block}</div>`;
   }).join('');
+  renderWeekSummary();
+}
+
+function renderWeekSummary(){
+  const empId=$('schEmployee').value;
+  if(!empId){ $('weekSummaryRows').innerHTML=''; return; }
+  const emp=db.employees.find(e=>e.id===empId);
+  const weekStart=parseWeekStart($('tplWeekStart').value);
+  const dates=allWeekDates(weekStart);
+  const cols=dates.map(d=>{
+    const s=findSchedule(empId,d);
+    return `<td>${s?`${s.start}-${s.end}`:'OFF'}</td>`;
+  }).join('');
+  $('weekSummaryRows').innerHTML=`<tr><td>${emp?emp.name:empId} (${weekStart}~${dates[6]})</td>${cols}</tr>`;
 }
 
 window.editDay=function(date){
@@ -418,6 +439,10 @@ $('applyTemplate').onclick=()=>{
   else if(type==='TUE_SAT') days=[2,3,4,5,6];
   else days=selectedCustomDays();
   if(!days.length){alert('Select weekdays for custom template');return;}
+
+  const weekSet=new Set(allWeekDates(start));
+  const keepSet=new Set(weekDates(start,days));
+  db.schedules=db.schedules.filter(s=>!(s.employeeId===empId && weekSet.has(s.date) && !keepSet.has(s.date)));
 
   weekDates(start,days).forEach(date=>{
     const existed=findSchedule(empId,date);
@@ -536,11 +561,17 @@ $('cancelEditEmployee').onclick=resetEmployeeForm;
     [...document.querySelectorAll('.tpl-btn')].forEach(x=>x.classList.remove('active'));
     btn.classList.add('active');
     activeTemplate=btn.dataset.template;
+    if(activeTemplate==='MON_FRI'){
+      [...document.querySelectorAll('.day-btn')].forEach(b=>b.classList.toggle('active',['1','2','3','4','5'].includes(b.dataset.day)));
+    } else if(activeTemplate==='TUE_SAT'){
+      [...document.querySelectorAll('.day-btn')].forEach(b=>b.classList.toggle('active',['2','3','4','5','6'].includes(b.dataset.day)));
+    }
     syncTemplateUI();
   };
 });
 $('weekToday').onclick=()=>{ $('tplWeekStart').value=parseWeekStart(); renderWeekCalendar(); };
 $('weekNext').onclick=()=>{ $('tplWeekStart').value=shiftWeek(parseWeekStart($('tplWeekStart').value),1); renderWeekCalendar(); };
+$('saveWeek').onclick=()=>{ save(); renderWeekSummary(); alert('Week saved'); };
 $('useCustomRules').onchange=()=> $('customRulesRow').classList.toggle('hidden',$('useCustomRules').value!=='yes');
 $('schEmployee').onchange=renderWeekCalendar;
 $('tplWeekStart').onchange=renderWeekCalendar;
