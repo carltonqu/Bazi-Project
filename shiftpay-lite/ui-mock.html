@@ -193,11 +193,12 @@
       <div class="field"><label>All Staffs / Country View</label><select id="prCountry"><option>ALL</option><option>US</option><option>AU</option><option>PH</option></select></div>
       <div class="field"><label>Payroll Month (YYYY-MM)</label><input id="prMonth" value="2026-03"></div>
       <div class="field"><label>Focus Employee</label><select id="payrollEmployeeFocus"></select></div>
-      <div class="field"><label>Custom override</label><select id="useCustomRules"><option value="no">Auto by country preset</option><option value="yes">Use custom tax/benefits</option></select></div>
+      <div class="field"><label>Preset source</label><select id="ruleMode"><option value="default">Official country preset</option><option value="company">Company saved preset</option><option value="custom">Custom edit</option></select></div>
     </div>
-    <div class="row two hidden" id="customRulesRow">
+    <div class="row three hidden" id="customRulesRow">
       <div class="field"><label>Custom Tax %</label><input id="customTaxPct" type="number" step="0.1" value="10"></div>
       <div class="field"><label>Custom Benefits %</label><input id="customBenPct" type="number" step="0.1" value="8"></div>
+      <div class="field"><label>&nbsp;</label><button id="savePreset">Save as company preset</button></div>
     </div>
     <div class="card" style="margin-bottom:10px;">
       <h4 style="margin:0 0 6px;">Country rule breakdown (auto)</h4>
@@ -237,6 +238,8 @@ const countryRules={
   PH:{otMul:1.25,tax:8,ben:6,currency:'PHP'}
 };
 
+let companyCountryRules = JSON.parse(localStorage.getItem('sp_company_country_rules') || 'null') || JSON.parse(JSON.stringify(countryRules));
+
 const countryBenefitBreakdown={
   US:[
     {name:'Federal Tax',pct:'included in Tax %'},
@@ -245,13 +248,13 @@ const countryBenefitBreakdown={
   ],
   AU:[
     {name:'PAYG Withholding',pct:'included in Tax %'},
-    {name:'Superannuation',pct:'11% (preset)'}
+    {name:'Superannuation',pct:'11%'}
   ],
   PH:[
     {name:'Withholding Tax',pct:'included in Tax %'},
-    {name:'SSS',pct:'preset component'},
-    {name:'PhilHealth',pct:'preset component'},
-    {name:'Pag-IBIG',pct:'preset component'}
+    {name:'SSS',pct:'~4.5% employee side (preset model)'},
+    {name:'PhilHealth',pct:'~2.5% employee share (preset model)'},
+    {name:'Pag-IBIG',pct:'~1-2% employee side (preset model)'}
   ]
 };
 
@@ -418,38 +421,47 @@ function calcBase(emp){
   const totalH=db.attendance.filter(a=>a.employeeId===emp.id).reduce((sum,a)=>sum+compareAttendance(a).actH,0);
   return totalH*Number(emp.hourly||0);
 }
-function calcOt(emp){
-  const r=countryRules[emp.country]||countryRules.US;
+function calcOt(emp, rule){
+  const r=rule || countryRules[emp.country]||countryRules.US;
   const approved=db.exceptions.filter(x=>x.employeeId===emp.id&&x.type==='OT'&&x.status==='APPROVED').reduce((s,x)=>s+Number(x.hours||0),0);
   return approved*Number(emp.hourly||0)*r.otMul;
 }
 
-function renderCountryRulePanel(){
+function getContextCountry(){
   const focus=$('payrollEmployeeFocus').value;
-  const useCustom=$('useCustomRules').value==='yes';
-  let country='US';
   if(focus && focus!=='ALL'){
     const emp=db.employees.find(e=>e.id===focus);
-    if(emp) country=emp.country;
-  } else if($('prCountry').value!=='ALL') {
-    country=$('prCountry').value;
+    if(emp) return emp.country;
   }
-  const preset=countryRules[country]||countryRules.US;
+  if($('prCountry').value!=='ALL') return $('prCountry').value;
+  return 'US';
+}
+
+function getAppliedRule(country){
+  const mode=$('ruleMode').value;
+  if(mode==='custom'){
+    const base=companyCountryRules[country] || countryRules[country] || countryRules.US;
+    return {...base, tax:Number($('customTaxPct').value||0), ben:Number($('customBenPct').value||0)};
+  }
+  if(mode==='company') return companyCountryRules[country] || countryRules[country] || countryRules.US;
+  return countryRules[country] || countryRules.US;
+}
+
+function renderCountryRulePanel(){
+  const country=getContextCountry();
+  const mode=$('ruleMode').value;
+  const applied=getAppliedRule(country);
   const lines=(countryBenefitBreakdown[country]||[]).map(x=>`<li>${x.name} - ${x.pct}</li>`).join('');
-  const customText = useCustom ? `<div class='warn'>Custom override ON: Tax ${$('customTaxPct').value}% / Benefits ${$('customBenPct').value}%</div>` : '';
-  $('countryRulePanel').innerHTML = `<b>${country} preset:</b> Tax ${preset.tax}% | Benefits ${preset.ben}% | OT x${preset.otMul}<ul>${lines}</ul>${customText}`;
+  const modeText = mode==='default' ? 'Official preset' : (mode==='company' ? 'Company saved preset' : 'Custom edit (not saved)');
+  $('countryRulePanel').innerHTML = `<b>${country} (${modeText}):</b> Tax ${applied.tax}% | Benefits ${applied.ben}% | OT x${applied.otMul}<ul>${lines}</ul>`;
 }
 
 function runPayroll(){
   const view=$('prCountry').value;
   const focus=$('payrollEmployeeFocus').value;
-  const useCustom=$('useCustomRules').value==='yes';
-  const customTax=Number($('customTaxPct').value||0);
-  const customBen=Number($('customBenPct').value||0);
   db.payroll=db.employees.filter(e=>(focus&&focus!=='ALL'? e.id===focus : (view==='ALL'||e.country===view))).map(emp=>{
-    const preset=countryRules[emp.country]||countryRules.US;
-    const r=useCustom?{...preset,tax:customTax,ben:customBen}:preset;
-    const base=calcBase(emp), ot=calcOt(emp), gross=base+ot;
+    const r=getAppliedRule(emp.country);
+    const base=calcBase(emp), ot=calcOt(emp, r), gross=base+ot;
     const tax=gross*(r.tax/100), ben=gross*(r.ben/100), net=gross-tax-ben;
     return {employeeId:emp.id,name:emp.name,department:emp.department,country:emp.country,currency:r.currency,base,ot,tax,benefits:ben,net};
   });
@@ -623,7 +635,17 @@ $('cancelEditEmployee').onclick=resetEmployeeForm;
 $('weekToday').onclick=()=>{ $('tplWeekStart').value=parseWeekStart(); renderWeekCalendar(); };
 $('weekNext').onclick=()=>{ $('tplWeekStart').value=shiftWeek(parseWeekStart($('tplWeekStart').value),1); renderWeekCalendar(); };
 $('saveWeek').onclick=()=>{ save(); renderWeekSummary(); alert('Week saved'); };
-$('useCustomRules').onchange=()=> { $('customRulesRow').classList.toggle('hidden',$('useCustomRules').value!=='yes'); renderCountryRulePanel(); };
+$('ruleMode').onchange=()=> { $('customRulesRow').classList.toggle('hidden',$('ruleMode').value!=='custom'); renderCountryRulePanel(); };
+$('savePreset').onclick=()=>{
+  const c=getContextCountry();
+  const base=companyCountryRules[c] || countryRules[c] || countryRules.US;
+  companyCountryRules[c]={...base,tax:Number($('customTaxPct').value||base.tax),ben:Number($('customBenPct').value||base.ben)};
+  localStorage.setItem('sp_company_country_rules', JSON.stringify(companyCountryRules));
+  $('ruleMode').value='company';
+  $('customRulesRow').classList.add('hidden');
+  renderCountryRulePanel();
+  alert(`Saved company preset for ${c}`);
+};
 $('payrollEmployeeFocus').onchange=renderCountryRulePanel;
 $('prCountry').onchange=renderCountryRulePanel;
 $('customTaxPct').oninput=renderCountryRulePanel;
