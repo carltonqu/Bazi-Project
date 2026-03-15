@@ -188,20 +188,20 @@
   </section>
 
   <section id="payroll" class="panel">
-    <h3>Payroll auto-applies country rules</h3>
+    <h3>Payroll（按员工国家自动套用规则）</h3>
     <div class="row">
-      <div class="field"><label>Country View</label><select id="prCountry"><option>ALL</option><option>US</option><option>AU</option><option>PH</option></select></div>
+      <div class="field"><label>All Staffs / Country View</label><select id="prCountry"><option>ALL</option><option>US</option><option>AU</option><option>PH</option></select></div>
       <div class="field"><label>Payroll Month (YYYY-MM)</label><input id="prMonth" value="2026-03"></div>
-      <div class="field"><label>US preset</label><div class="chip">Tax 12% · Benefits 7.65%</div></div>
-      <div class="field"><label>AU preset</label><div class="chip">Tax 19% · Benefits 11%</div></div>
-    </div>
-    <div class="row two">
-      <div class="field"><label>PH preset</label><div class="chip">Tax 8% · Benefits 6%</div></div>
-      <div class="field"><label>Custom override</label><select id="useCustomRules"><option value="no">Use country preset (auto)</option><option value="yes">Use custom tax/benefits</option></select></div>
+      <div class="field"><label>Focus Employee</label><select id="payrollEmployeeFocus"></select></div>
+      <div class="field"><label>Custom override</label><select id="useCustomRules"><option value="no">Auto by country preset</option><option value="yes">Use custom tax/benefits</option></select></div>
     </div>
     <div class="row two hidden" id="customRulesRow">
       <div class="field"><label>Custom Tax %</label><input id="customTaxPct" type="number" step="0.1" value="10"></div>
       <div class="field"><label>Custom Benefits %</label><input id="customBenPct" type="number" step="0.1" value="8"></div>
+    </div>
+    <div class="card" style="margin-bottom:10px;">
+      <h4 style="margin:0 0 6px;">Country rule breakdown (auto)</h4>
+      <div id="countryRulePanel" class="small"></div>
     </div>
     <div style="display:flex;gap:8px;">
       <button id="runPayroll">Run Payroll</button>
@@ -235,6 +235,24 @@ const countryRules={
   US:{otMul:1.5,tax:12,ben:7.65,currency:'USD'},
   AU:{otMul:1.5,tax:19,ben:11,currency:'AUD'},
   PH:{otMul:1.25,tax:8,ben:6,currency:'PHP'}
+};
+
+const countryBenefitBreakdown={
+  US:[
+    {name:'Federal Tax',pct:'included in Tax %'},
+    {name:'Social Security',pct:'6.2%'},
+    {name:'Medicare',pct:'1.45%'}
+  ],
+  AU:[
+    {name:'PAYG Withholding',pct:'included in Tax %'},
+    {name:'Superannuation',pct:'11% (preset)'}
+  ],
+  PH:[
+    {name:'Withholding Tax',pct:'included in Tax %'},
+    {name:'SSS',pct:'preset component'},
+    {name:'PhilHealth',pct:'preset component'},
+    {name:'Pag-IBIG',pct:'preset component'}
+  ]
 };
 
 const $=id=>document.getElementById(id);
@@ -289,6 +307,7 @@ function resetEmployeeForm(){
 function renderSelectors(){
   const opts=db.employees.map(e=>`<option value="${e.id}">${e.id} - ${e.name}</option>`).join('');
   ['schEmployee','attEmployee','exEmployee','dupEmployee'].forEach(id=>$(id).innerHTML=opts);
+  $('payrollEmployeeFocus').innerHTML = `<option value="ALL">ALL STAFFS</option>` + opts;
 }
 function renderEmployees(){
   $('employeesRows').innerHTML=db.employees.map(e=>`<tr><td>${e.id}</td><td>${e.name}</td><td>${e.department}</td><td>${e.role}</td><td>${e.payType}</td><td>${e.country}</td><td><button class="ghost" onclick="editEmployee('${e.id}')">Edit</button> <button class="secondary" onclick="deleteEmployee('${e.id}')">Delete</button></td></tr>`).join('');
@@ -307,7 +326,7 @@ window.deleteEmployee=function(id){
   db.schedules=db.schedules.filter(s=>s.employeeId!==id);
   db.attendance=db.attendance.filter(a=>a.employeeId!==id);
   db.exceptions=db.exceptions.filter(x=>x.employeeId!==id);
-  save(); renderEmployees(); renderSelectors(); renderWeekCalendar(); renderAttendance(); renderExceptions(); renderApproval(); runPayroll();
+  save(); renderEmployees(); renderSelectors(); renderWeekCalendar(); renderAttendance(); renderExceptions(); renderApproval(); runPayroll(); renderCountryRulePanel();
 };
 function renderSchedule(){
   // visual calendar is now the primary schedule surface
@@ -405,12 +424,29 @@ function calcOt(emp){
   return approved*Number(emp.hourly||0)*r.otMul;
 }
 
+function renderCountryRulePanel(){
+  const focus=$('payrollEmployeeFocus').value;
+  const useCustom=$('useCustomRules').value==='yes';
+  let country='US';
+  if(focus && focus!=='ALL'){
+    const emp=db.employees.find(e=>e.id===focus);
+    if(emp) country=emp.country;
+  } else if($('prCountry').value!=='ALL') {
+    country=$('prCountry').value;
+  }
+  const preset=countryRules[country]||countryRules.US;
+  const lines=(countryBenefitBreakdown[country]||[]).map(x=>`<li>${x.name} - ${x.pct}</li>`).join('');
+  const customText = useCustom ? `<div class='warn'>Custom override ON: Tax ${$('customTaxPct').value}% / Benefits ${$('customBenPct').value}%</div>` : '';
+  $('countryRulePanel').innerHTML = `<b>${country} preset:</b> Tax ${preset.tax}% | Benefits ${preset.ben}% | OT x${preset.otMul}<ul>${lines}</ul>${customText}`;
+}
+
 function runPayroll(){
   const view=$('prCountry').value;
+  const focus=$('payrollEmployeeFocus').value;
   const useCustom=$('useCustomRules').value==='yes';
   const customTax=Number($('customTaxPct').value||0);
   const customBen=Number($('customBenPct').value||0);
-  db.payroll=db.employees.filter(e=>view==='ALL'||e.country===view).map(emp=>{
+  db.payroll=db.employees.filter(e=>(focus&&focus!=='ALL'? e.id===focus : (view==='ALL'||e.country===view))).map(emp=>{
     const preset=countryRules[emp.country]||countryRules.US;
     const r=useCustom?{...preset,tax:customTax,ben:customBen}:preset;
     const base=calcBase(emp), ot=calcOt(emp), gross=base+ot;
@@ -441,7 +477,7 @@ $('addEmployee').onclick=()=>{
     if(db.employees.some(x=>x.id===e.id)){ alert('Employee ID already exists'); return; }
     db.employees.push(e);
   }
-  save(); renderEmployees(); renderSelectors(); resetEmployeeForm();
+  save(); renderEmployees(); renderSelectors(); resetEmployeeForm(); renderCountryRulePanel();
 };
 
 $('applyTemplate').onclick=()=>{
@@ -587,7 +623,11 @@ $('cancelEditEmployee').onclick=resetEmployeeForm;
 $('weekToday').onclick=()=>{ $('tplWeekStart').value=parseWeekStart(); renderWeekCalendar(); };
 $('weekNext').onclick=()=>{ $('tplWeekStart').value=shiftWeek(parseWeekStart($('tplWeekStart').value),1); renderWeekCalendar(); };
 $('saveWeek').onclick=()=>{ save(); renderWeekSummary(); alert('Week saved'); };
-$('useCustomRules').onchange=()=> $('customRulesRow').classList.toggle('hidden',$('useCustomRules').value!=='yes');
+$('useCustomRules').onchange=()=> { $('customRulesRow').classList.toggle('hidden',$('useCustomRules').value!=='yes'); renderCountryRulePanel(); };
+$('payrollEmployeeFocus').onchange=renderCountryRulePanel;
+$('prCountry').onchange=renderCountryRulePanel;
+$('customTaxPct').oninput=renderCountryRulePanel;
+$('customBenPct').oninput=renderCountryRulePanel;
 $('schEmployee').onchange=renderWeekCalendar;
 $('tplWeekStart').onchange=renderWeekCalendar;
 $('tplWeekStart').onclick=()=>{ if($('tplWeekStart').showPicker) $('tplWeekStart').showPicker(); };
@@ -599,7 +639,7 @@ $('manualDate').onclick=()=>{ if($('manualDate').showPicker) $('manualDate').sho
   t.classList.add('active'); $(t.dataset.tab).classList.add('active');
 });
 
-renderEmployees(); renderSelectors(); renderSchedule(); renderAttendance(); renderExceptions(); renderApproval(); renderWeekCalendar(); runPayroll(); resetEmployeeForm(); syncTemplateUI();
+renderEmployees(); renderSelectors(); renderSchedule(); renderAttendance(); renderExceptions(); renderApproval(); renderWeekCalendar(); runPayroll(); resetEmployeeForm(); syncTemplateUI(); renderCountryRulePanel();
 </script>
 </body>
 </html>
