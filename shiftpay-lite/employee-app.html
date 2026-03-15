@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShiftPay Lite - Employee</title>
+  <style>
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#0b1020;color:#e8eefc;margin:0}
+    .wrap{max-width:760px;margin:20px auto;padding:0 16px}
+    .card{background:#151c33;border:1px solid #283253;border-radius:14px;padding:14px;margin-bottom:12px}
+    h1{font-size:22px;margin:0 0 6px}
+    .small{font-size:12px;color:#9fb0e2}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+    .field{display:flex;flex-direction:column;gap:6px}
+    .field label{font-size:12px;color:#9fb0e2}
+    input,select,button,textarea{width:100%;padding:10px;border-radius:10px;border:1px solid #32406b;background:#0f1630;color:#e8eefc;box-sizing:border-box}
+    button{background:#4f7cff;border:none;font-weight:700;cursor:pointer}
+    button.secondary{background:#2f406f}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th,td{padding:8px;border-bottom:1px solid #2a355b;text-align:left}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Employee App</h1>
+  <div class="small">Clock In / Clock Out / Exception submit (syncs to HR local demo storage)</div>
+
+  <div class="card">
+    <div class="row">
+      <div class="field"><label>Employee</label><select id="empSelect"></select></div>
+      <div class="field"><label>Date</label><input id="workDate" type="date"></div>
+    </div>
+    <div class="row">
+      <div class="field"><label>GPS status</label><select id="gps"><option value="on-site">On-site</option><option value="off-site">Off-site</option></select></div>
+      <div class="field"><label>Capture mode</label><select id="capture"><option value="mobile-gps">mobile-gps</option><option value="fingerprint">fingerprint</option></select></div>
+    </div>
+    <div class="row">
+      <button id="clockIn">Clock In (Now)</button>
+      <button class="secondary" id="clockOut">Clock Out (Now)</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin:0 0 8px;">Submit Exception</h3>
+    <div class="row">
+      <div class="field"><label>Type</label><select id="exType"><option value="OT">OT Request</option><option value="ABSENT">Absent</option><option value="MEDICAL">Medical Certificate</option><option value="ANNUAL">Annual Leave</option><option value="LATE">Late Reason</option></select></div>
+      <div class="field"><label>Hours (OT)</label><input id="exHours" type="number" step="0.25" value="1.5"></div>
+    </div>
+    <div class="field"><label>Details</label><textarea id="exDetails" rows="3" placeholder="Reason/details"></textarea></div>
+    <button id="submitException">Submit</button>
+  </div>
+
+  <div class="card">
+    <h3 style="margin:0 0 8px;">My Recent Attendance</h3>
+    <table><thead><tr><th>Date</th><th>Clock In</th><th>Clock Out</th><th>GPS</th><th>Capture</th></tr></thead><tbody id="attRows"></tbody></table>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const uid=()=>Math.random().toString(36).slice(2,10);
+
+function nowHM(){
+  const d=new Date();
+  const h=String(d.getHours()).padStart(2,'0');
+  const m=String(d.getMinutes()).padStart(2,'0');
+  return `${h}:${m}`;
+}
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+
+function read(key, fallback){ try{return JSON.parse(localStorage.getItem(key)||JSON.stringify(fallback));}catch{return fallback;} }
+function write(key,val){ localStorage.setItem(key, JSON.stringify(val)); }
+
+function loadEmployees(){
+  const employees=read('sp_employees',[]);
+  $('empSelect').innerHTML=employees.map(e=>`<option value="${e.id}">${e.id} - ${e.name}</option>`).join('');
+}
+
+function renderMyAttendance(){
+  const empId=$('empSelect').value;
+  const attendance=read('sp_attendance',[]).filter(a=>a.employeeId===empId).slice().reverse().slice(0,10);
+  $('attRows').innerHTML=attendance.map(a=>`<tr><td>${a.date}</td><td>${a.in||''}</td><td>${a.out||''}</td><td>${a.gps||''}</td><td>${a.capture||''}</td></tr>`).join('');
+}
+
+function upsertAttendanceClock(type){
+  const empId=$('empSelect').value;
+  const date=$('workDate').value || todayISO();
+  const gps=$('gps').value;
+  const capture=$('capture').value;
+  if(!empId){ alert('Select employee'); return; }
+
+  const list=read('sp_attendance',[]);
+  let row=list.find(a=>a.employeeId===empId && a.date===date);
+  if(!row){
+    row={id:uid(),employeeId:empId,date,in:'',out:'',breakMin:60,gps,capture};
+    list.push(row);
+  }
+  row.gps=gps; row.capture=capture;
+  if(type==='in') row.in=nowHM(); else row.out=nowHM();
+  write('sp_attendance',list);
+  renderMyAttendance();
+  alert(type==='in'?'Clock in saved':'Clock out saved');
+}
+
+$('clockIn').onclick=()=>upsertAttendanceClock('in');
+$('clockOut').onclick=()=>upsertAttendanceClock('out');
+
+$('submitException').onclick=()=>{
+  const empId=$('empSelect').value;
+  const date=$('workDate').value || todayISO();
+  if(!empId){ alert('Select employee'); return; }
+  const x={
+    id:uid(), employeeId:empId, date,
+    type:$('exType').value,
+    hours:Number($('exHours').value||0),
+    details:$('exDetails').value.trim(),
+    status:'PENDING'
+  };
+  const ex=read('sp_exceptions',[]);
+  ex.push(x); write('sp_exceptions',ex);
+  $('exDetails').value='';
+  alert('Exception submitted');
+};
+
+$('workDate').value=todayISO();
+loadEmployees();
+$('empSelect').onchange=renderMyAttendance;
+renderMyAttendance();
+</script>
+</body>
+</html>
