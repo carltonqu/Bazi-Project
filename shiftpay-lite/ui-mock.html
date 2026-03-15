@@ -66,10 +66,10 @@
     </div>
     <button id="addEmployee">Save Employee</button>
     <button class="secondary" id="cancelEditEmployee">Cancel Edit</button>
-    <table><thead><tr><th>ID</th><th>Name</th><th>Department</th><th>Role</th><th>Pay Type</th><th>Country</th><th>Sick Leave Used</th><th>Annual Leave Used</th><th>Actions</th></tr></thead><tbody id="employeesRows"></tbody></table>
+    <table><thead><tr><th>ID</th><th>Name</th><th>Department</th><th>Role</th><th>Pay Type</th><th>Country</th><th>Actions</th></tr></thead><tbody id="employeesRows"></tbody></table>
 
     <div class="card" style="margin-top:10px;">
-      <h4 style="margin:0 0 8px;">Accumulated Staff Portfolio</h4>
+      <h4 style="margin:0 0 8px;">Employee Records</h4>
       <div class="row two">
         <div class="field"><label>Select employee</label><select id="portfolioEmployee"></select></div>
         <div class="field"><label>Summary</label><div id="portfolioSummary" class="small">No data</div></div>
@@ -119,9 +119,8 @@
 
     <div class="row two">
       <div class="field"><label>&nbsp;</label><button class="secondary" id="copyToNext">Copy this week → next week</button></div>
-      <div class="field"><label>Manual single shift date</label><input id="manualDate" type="date" readonly></div>
+      <div class="field"><label>&nbsp;</label><div class="small">Main flow: Select employee/week → Apply template → Edit day → Copy next week</div></div>
     </div>
-    <button id="addSingleShift">Add Single Shift</button>
 
     <details style="margin-top:10px;">
       <summary class="small" style="cursor:pointer;">More actions</summary>
@@ -131,8 +130,9 @@
       </div>
       <div class="row two">
         <div class="field"><label>Duplicate target employee</label><select id="dupEmployee"></select></div>
-        <div class="field"><label>&nbsp;</label><div class="small">Advanced operations are hidden by default.</div></div>
+        <div class="field"><label>Manual single shift date</label><input id="manualDate" type="date" readonly></div>
       </div>
+      <button id="addSingleShift">Add Single Shift</button>
     </details>
 
     <h4 style="margin:12px 0 6px;">Weekly timeline calendar</h4>
@@ -179,7 +179,7 @@
     </div>
     <button id="saveAttendance">Save Attendance Record</button>
     <table>
-      <thead><tr><th>Employee</th><th>Date</th><th>Actual</th><th>Scheduled Hrs</th><th>Actual Hrs</th><th>Variance</th><th>Variance Status</th><th>Exception Status</th></tr></thead>
+      <thead><tr><th>Employee</th><th>Date</th><th>Scheduled</th><th>Actual</th><th>Variance</th><th>Status</th></tr></thead>
       <tbody id="attendanceRows"></tbody>
     </table>
   </section>
@@ -356,8 +356,7 @@ function renderPortfolio(){
 
 function renderEmployees(){
   $('employeesRows').innerHTML=db.employees.map(e=>{
-    const u=leaveUsage(e.id);
-    return `<tr><td>${e.id}</td><td>${e.name}</td><td>${e.department}</td><td>${e.role}</td><td>${e.payType}</td><td>${e.country}</td><td>${u.sick}</td><td>${u.annual}</td><td><button class="ghost" onclick="editEmployee('${e.id}')">Edit</button> <button class="secondary" onclick="deleteEmployee('${e.id}')">Delete</button></td></tr>`;
+    return `<tr><td>${e.id}</td><td>${e.name}</td><td>${e.department}</td><td>${e.role}</td><td>${e.payType}</td><td>${e.country}</td><td><button class="ghost" onclick="editEmployee('${e.id}')">Edit</button> <button class="secondary" onclick="deleteEmployee('${e.id}')">Delete</button></td></tr>`;
   }).join('');
 }
 
@@ -444,26 +443,35 @@ function compareAttendance(att){
   const varH=(actH-schH).toFixed(2);
   let status='MATCH';
   if(!sch) status='NO_SCHEDULE';
-  else if(Number(varH)>0.25) status='OT_CANDIDATE';
-  else if(Number(varH)<-0.25) status='UNDER_TIME';
-  return {schH,actH,varH,status};
+  else {
+    const inLate = mins(att.in) > (mins(sch.start) + 10);
+    if(inLate) status='LATE';
+    if(Number(varH)>0.25) status='OT_CANDIDATE';
+    else if(Number(varH)<-0.25) status='UNDER_TIME';
+  }
+  return {schH,actH,varH,status,scheduled: sch?`${sch.start}-${sch.end}`:'-', actual:`${att.in}-${att.out}`};
 }
 
 function renderAttendance(){
   $('attendanceRows').innerHTML=db.attendance.map(a=>{
     const c=compareAttendance(a);
-    const ex=findException(a.employeeId,a.date);
-    const exStatus=ex?`${ex.type}:${ex.status}`:'NONE';
-    const cls=c.status==='MATCH'?'ok':(c.status==='OT_CANDIDATE'?'warn':'bad');
-    return `<tr><td>${a.employeeId}</td><td>${a.date}</td><td>${a.in}-${a.out}</td><td>${c.schH.toFixed(2)}</td><td>${c.actH.toFixed(2)}</td><td>${c.varH}</td><td class="${cls}">${c.status}</td><td>${exStatus}</td></tr>`;
+    const cls=(c.status==='MATCH')?'ok':((c.status==='OT_CANDIDATE'||c.status==='LATE')?'warn':'bad');
+    return `<tr><td>${a.employeeId}</td><td>${a.date}</td><td>${c.scheduled}</td><td>${c.actual}</td><td>${c.varH}</td><td class="${cls}">${c.status}</td></tr>`;
   }).join('');
 }
 
 function renderExceptions(){
-  $('exceptionRows').innerHTML=db.exceptions.map(x=>`<tr><td>${x.employeeId}</td><td>${x.date}</td><td>${x.type}</td><td>${x.hours||''}</td><td>${x.details||''}</td><td>${x.status}</td></tr>`).join('');
+  $('exceptionRows').innerHTML=db.exceptions.map(x=>{
+    const statusCls = x.status==='APPROVED' ? 'ok' : (x.status==='PENDING' ? 'warn' : 'bad');
+    const typeCls = (x.type==='ABSENT') ? 'bad' : (x.type==='OT' ? 'warn' : 'ok');
+    return `<tr><td>${x.employeeId}</td><td>${x.date}</td><td class="${typeCls}">${x.type}</td><td>${x.hours||''}</td><td>${x.details||''}</td><td class="${statusCls}">${x.status}</td></tr>`;
+  }).join('');
 }
 function renderApproval(){
-  $('approvalRows').innerHTML=db.exceptions.filter(x=>x.type==='OT').map(x=>`<tr><td>${x.employeeId}</td><td>${x.date}</td><td>${x.type}</td><td>${x.hours||0}</td><td>${x.details||''}</td><td>${x.status}</td><td>${x.status==='PENDING'?`<button onclick="approveOt('${x.id}')">Approve</button>`:'-'}</td></tr>`).join('');
+  $('approvalRows').innerHTML=db.exceptions.filter(x=>x.type==='OT').map(x=>{
+    const statusCls = x.status==='APPROVED' ? 'ok' : (x.status==='PENDING' ? 'warn' : 'bad');
+    return `<tr><td>${x.employeeId}</td><td>${x.date}</td><td>${x.type}</td><td>${x.hours||0}</td><td>${x.details||''}</td><td class="${statusCls}">${x.status}</td><td>${x.status==='PENDING'?`<button onclick="approveOt('${x.id}')">Approve</button>`:'-'}</td></tr>`;
+  }).join('');
 }
 window.approveOt=(id)=>{ const ex=db.exceptions.find(x=>x.id===id); if(ex){ex.status='APPROVED'; save(); renderExceptions(); renderApproval(); renderAttendance();} };
 
