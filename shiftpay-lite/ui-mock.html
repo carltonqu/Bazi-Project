@@ -66,58 +66,66 @@
   </section>
 
   <section id="schedule" class="panel">
-    <h3>Scheduling (calendar-first)</h3>
+    <h3>Scheduling (visual weekly calendar)</h3>
     <div class="row">
       <div class="field"><label>Employee</label><select id="schEmployee"></select></div>
       <div class="field"><label>Week Start</label><input id="tplWeekStart" type="date"></div>
-      <div class="field"><label>Weekly Template</label><select id="schTemplate"><option value="MON_FRI">Mon-Fri</option><option value="TUE_SAT">Tue-Sat</option><option value="CUSTOM">Custom</option></select></div>
       <div class="field"><label>Shift Time</label><input id="tplTime" value="09:00-18:00"></div>
-    </div>
-    <div class="row">
       <div class="field"><label>Break Minutes</label><input id="tplBreak" type="number" value="60"></div>
+    </div>
+    <div class="row two">
       <div class="field"><label>Shift Type</label><select id="tplType"><option value="normal">Normal</option><option value="holiday">Holiday</option></select></div>
-      <div class="field" style="grid-column: span 2;"><label>Custom weekdays</label>
-        <div id="weekdayBtns" style="display:flex;gap:6px;flex-wrap:wrap;">
-          <button type="button" class="ghost day-btn" data-day="0">Sun</button>
-          <button type="button" class="ghost day-btn" data-day="1">Mon</button>
-          <button type="button" class="ghost day-btn" data-day="2">Tue</button>
-          <button type="button" class="ghost day-btn" data-day="3">Wed</button>
-          <button type="button" class="ghost day-btn" data-day="4">Thu</button>
-          <button type="button" class="ghost day-btn" data-day="5">Fri</button>
-          <button type="button" class="ghost day-btn" data-day="6">Sat</button>
+      <div class="field"><label>Weekly template quick buttons</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button type="button" class="ghost tpl-btn active" data-template="MON_FRI">Mon-Fri</button>
+          <button type="button" class="ghost tpl-btn" data-template="TUE_SAT">Tue-Sat</button>
+          <button type="button" class="ghost tpl-btn" data-template="CUSTOM">Custom</button>
+          <button type="button" id="applyTemplate">Apply Template</button>
         </div>
       </div>
     </div>
 
+    <div class="field" style="margin-bottom:10px;"><label>Custom weekdays (for Custom template)</label>
+      <div id="weekdayBtns" style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button type="button" class="ghost day-btn" data-day="0">Sun</button>
+        <button type="button" class="ghost day-btn" data-day="1">Mon</button>
+        <button type="button" class="ghost day-btn" data-day="2">Tue</button>
+        <button type="button" class="ghost day-btn" data-day="3">Wed</button>
+        <button type="button" class="ghost day-btn" data-day="4">Thu</button>
+        <button type="button" class="ghost day-btn" data-day="5">Fri</button>
+        <button type="button" class="ghost day-btn" data-day="6">Sat</button>
+      </div>
+    </div>
+
     <div class="row three">
-      <div class="field"><label>&nbsp;</label><button id="applyTemplate">Apply Template</button></div>
       <div class="field"><label>&nbsp;</label><button class="secondary" id="copyToNext">Copy this week → next week</button></div>
       <div class="field"><label>&nbsp;</label><button class="secondary" id="copyFromPrev">Copy from previous week</button></div>
+      <div class="field"><label>&nbsp;</label><button class="secondary" id="dupToEmployee">Duplicate to another employee</button></div>
     </div>
 
     <div class="row two">
-      <div class="field"><label>Duplicate this week to employee</label><select id="dupEmployee"></select></div>
-      <div class="field"><label>&nbsp;</label><button class="secondary" id="dupToEmployee">Duplicate to employee</button></div>
+      <div class="field"><label>Duplicate target employee</label><select id="dupEmployee"></select></div>
+      <div class="field"><label>Manual single shift date</label><input id="manualDate" type="date"></div>
     </div>
+    <button id="addSingleShift">Add Single Shift</button>
 
-    <h4 style="margin:12px 0 6px;">Weekly calendar</h4>
-    <table><thead><tr><th>Day</th><th>Date</th><th>Current Shift</th><th>Edit</th></tr></thead><tbody id="weekCalendarRows"></tbody></table>
+    <h4 style="margin:12px 0 6px;">Weekly calendar blocks</h4>
+    <div id="weekCalendarGrid" style="display:grid;grid-template-columns:repeat(7,minmax(130px,1fr));gap:8px;"></div>
 
     <div class="card" style="margin-top:10px; background:#111833;">
-      <h4 style="margin:0 0 8px;">Edit selected day</h4>
+      <h4 style="margin:0 0 8px;">Edit shift block</h4>
       <div class="row">
-        <div class="field"><label>Selected date</label><input id="editDate" readonly></div>
+        <div class="field"><label>Date</label><input id="editDate" readonly></div>
         <div class="field"><label>Start</label><input id="editStart" value="09:00"></div>
         <div class="field"><label>End</label><input id="editEnd" value="18:00"></div>
         <div class="field"><label>Break</label><input id="editBreak" type="number" value="60"></div>
       </div>
-      <div class="row two">
+      <div class="row three">
         <div class="field"><label>Type</label><select id="editType"><option value="normal">Normal</option><option value="holiday">Holiday</option></select></div>
-        <div class="field"><label>&nbsp;</label><button id="saveDayEdit">OK (Save Day)</button></div>
+        <div class="field"><label>&nbsp;</label><button id="saveDayEdit">Save</button></div>
+        <div class="field"><label>&nbsp;</label><button class="secondary" id="deleteDayShift">Delete</button></div>
       </div>
     </div>
-
-    <table><thead><tr><th>Employee</th><th>Date</th><th>Shift</th><th>Break</th><th>Type</th></tr></thead><tbody id="scheduleRows"></tbody></table>
   </section>
 
   <section id="attendance" class="panel">
@@ -202,6 +210,7 @@ const countryRules={
 
 const $=id=>document.getElementById(id);
 const uid=()=>Math.random().toString(36).slice(2,10);
+let activeTemplate='MON_FRI';
 function save(){
   localStorage.setItem('sp_employees',JSON.stringify(db.employees));
   localStorage.setItem('sp_schedules',JSON.stringify(db.schedules));
@@ -236,8 +245,7 @@ function renderEmployees(){
   $('employeesRows').innerHTML=db.employees.map(e=>`<tr><td>${e.id}</td><td>${e.name}</td><td>${e.department}</td><td>${e.role}</td><td>${e.payType}</td><td>${e.country}</td></tr>`).join('');
 }
 function renderSchedule(){
-  $('scheduleRows').innerHTML=db.schedules.sort((a,b)=>(a.date+a.employeeId).localeCompare(b.date+b.employeeId))
-    .map(s=>`<tr><td>${s.employeeId}</td><td>${s.date}</td><td>${s.start}-${s.end}</td><td>${s.breakMin}</td><td>${s.type}</td></tr>`).join('');
+  // visual calendar is now the primary schedule surface
 }
 
 function renderWeekCalendar(){
@@ -245,10 +253,12 @@ function renderWeekCalendar(){
   const weekStart=parseWeekStart($('tplWeekStart').value);
   $('tplWeekStart').value=weekStart;
   const dates=allWeekDates(weekStart);
-  $('weekCalendarRows').innerHTML = dates.map((d,idx)=>{
+  $('weekCalendarGrid').innerHTML = dates.map((d,idx)=>{
     const s=findSchedule(empId,d);
-    const text=s?`${s.start}-${s.end} / break ${s.breakMin} / ${s.type}`:'(off)';
-    return `<tr><td>${dayName(idx)}</td><td>${d}</td><td>${text}</td><td><button class="ghost" onclick="editDay('${d}')">Edit</button></td></tr>`;
+    const block=s
+      ? `<button class="ghost" style="margin-top:6px;background:#243562;width:100%;text-align:left" onclick="editDay('${d}')">[${s.start}–${s.end}]<br><span class='small'>${s.type}, break ${s.breakMin}</span></button>`
+      : `<button class="ghost" style="margin-top:6px;width:100%;text-align:left" onclick="editDay('${d}')">+ Add shift</button>`;
+    return `<div class='card' style='padding:10px'><div><b>${dayName(idx)}</b></div><div class='small'>${d}</div>${block}</div>`;
   }).join('');
 }
 
@@ -256,10 +266,10 @@ window.editDay=function(date){
   const empId=$('schEmployee').value;
   const s=findSchedule(empId,date);
   $('editDate').value=date;
-  $('editStart').value=s?s.start:'09:00';
-  $('editEnd').value=s?s.end:'18:00';
-  $('editBreak').value=s?s.breakMin:60;
-  $('editType').value=s?s.type:'normal';
+  $('editStart').value=s?s.start:$('tplTime').value.split('-')[0]?.trim()||'09:00';
+  $('editEnd').value=s?s.end:$('tplTime').value.split('-')[1]?.trim()||'18:00';
+  $('editBreak').value=s?s.breakMin:Number($('tplBreak').value||60);
+  $('editType').value=s?s.type:$('tplType').value;
 };
 
 function findSchedule(empId,date){ return db.schedules.find(s=>s.employeeId===empId && s.date===date); }
@@ -334,7 +344,7 @@ $('addEmployee').onclick=()=>{
 };
 
 $('applyTemplate').onclick=()=>{
-  const empId=$('schEmployee').value, start=parseWeekStart($('tplWeekStart').value), type=$('schTemplate').value;
+  const empId=$('schEmployee').value, start=parseWeekStart($('tplWeekStart').value), type=activeTemplate;
   if(!empId){alert('Employee required');return;}
   $('tplWeekStart').value=start;
   const [st,en]=$('tplTime').value.split('-').map(x=>x.trim());
@@ -415,6 +425,25 @@ $('saveDayEdit').onclick=()=>{
   save(); renderSchedule(); renderWeekCalendar();
 };
 
+$('deleteDayShift').onclick=()=>{
+  const empId=$('schEmployee').value, date=$('editDate').value;
+  if(!empId||!date){alert('Select a day first');return;}
+  db.schedules = db.schedules.filter(s=>!(s.employeeId===empId && s.date===date));
+  save(); renderSchedule(); renderWeekCalendar();
+};
+
+$('addSingleShift').onclick=()=>{
+  const empId=$('schEmployee').value;
+  const date=$('manualDate').value;
+  if(!empId||!date){alert('Employee and date required');return;}
+  const [st,en]=$('tplTime').value.split('-').map(x=>x.trim());
+  const existed=findSchedule(empId,date);
+  const payload={start:st,end:en,breakMin:Number($('tplBreak').value||0),type:$('tplType').value};
+  if(existed) Object.assign(existed,payload);
+  else db.schedules.push({id:uid(),employeeId:empId,date,...payload});
+  save(); renderSchedule(); renderWeekCalendar();
+};
+
 $('saveAttendance').onclick=()=>{
   const a={id:uid(),employeeId:$('attEmployee').value,date:$('attDate').value,in:$('attIn').value,out:$('attOut').value,breakMin:Number($('attBreak').value||0),capture:$('attCapture').value};
   if(!a.employeeId||!a.date){alert('Employee and date required');return;}
@@ -434,6 +463,13 @@ $('exportPayroll').onclick=exportPayroll;
 [...document.querySelectorAll('.day-btn')].forEach(btn=>{
   if(['1','2','3','4','5'].includes(btn.dataset.day)) btn.classList.add('active');
   btn.onclick=()=>btn.classList.toggle('active');
+});
+[...document.querySelectorAll('.tpl-btn')].forEach(btn=>{
+  btn.onclick=()=>{
+    [...document.querySelectorAll('.tpl-btn')].forEach(x=>x.classList.remove('active'));
+    btn.classList.add('active');
+    activeTemplate=btn.dataset.template;
+  };
 });
 $('schEmployee').onchange=renderWeekCalendar;
 $('tplWeekStart').onchange=renderWeekCalendar;
