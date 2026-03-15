@@ -66,7 +66,15 @@
     </div>
     <button id="addEmployee">Save Employee</button>
     <button class="secondary" id="cancelEditEmployee">Cancel Edit</button>
-    <table><thead><tr><th>ID</th><th>Name</th><th>Department</th><th>Role</th><th>Pay Type</th><th>Country</th><th>Actions</th></tr></thead><tbody id="employeesRows"></tbody></table>
+    <table><thead><tr><th>ID</th><th>Name</th><th>Department</th><th>Role</th><th>Pay Type</th><th>Country</th><th>Sick Leave Used</th><th>Annual Leave Used</th><th>Actions</th></tr></thead><tbody id="employeesRows"></tbody></table>
+
+    <div class="card" style="margin-top:10px;">
+      <h4 style="margin:0 0 8px;">Accumulated Staff Portfolio</h4>
+      <div class="row two">
+        <div class="field"><label>Select employee</label><select id="portfolioEmployee"></select></div>
+        <div class="field"><label>Summary</label><div id="portfolioSummary" class="small">No data</div></div>
+      </div>
+    </div>
   </section>
 
   <section id="schedule" class="panel">
@@ -174,7 +182,7 @@
     <div class="row">
       <div class="field"><label>Employee</label><select id="exEmployee"></select></div>
       <div class="field"><label>Date</label><input id="exDate" type="date"></div>
-      <div class="field"><label>Type</label><select id="exType"><option value="OT">OT Request</option><option value="ABSENT">Absent</option><option value="MEDICAL">Medical Certificate</option><option value="LATE">Late Reason</option></select></div>
+      <div class="field"><label>Type</label><select id="exType"><option value="OT">OT Request</option><option value="ABSENT">Absent</option><option value="MEDICAL">Medical Certificate</option><option value="ANNUAL">Annual Leave</option><option value="LATE">Late Reason</option></select></div>
       <div class="field"><label>Hours (OT)</label><input id="exHours" type="number" step="0.25" value="1.5"></div>
     </div>
     <div class="field"><label>Details</label><textarea id="exDetails" rows="3" placeholder="Reason / certificate details"></textarea></div>
@@ -309,11 +317,29 @@ function resetEmployeeForm(){
 
 function renderSelectors(){
   const opts=db.employees.map(e=>`<option value="${e.id}">${e.id} - ${e.name}</option>`).join('');
-  ['schEmployee','attEmployee','exEmployee','dupEmployee'].forEach(id=>$(id).innerHTML=opts);
+  ['schEmployee','attEmployee','exEmployee','dupEmployee','portfolioEmployee'].forEach(id=>$(id).innerHTML=opts);
   $('payrollEmployeeFocus').innerHTML = `<option value="ALL">ALL STAFFS</option>` + opts;
 }
+function leaveUsage(employeeId){
+  const sick = db.exceptions.filter(x=>x.employeeId===employeeId && (x.type==='MEDICAL' || x.type==='ABSENT')).length;
+  const annual = db.exceptions.filter(x=>x.employeeId===employeeId && x.type==='ANNUAL').length;
+  return {sick, annual};
+}
+
+function renderPortfolio(){
+  const empId=$('portfolioEmployee').value;
+  if(!empId){ $('portfolioSummary').textContent='No data'; return; }
+  const emp=db.employees.find(e=>e.id===empId);
+  if(!emp){ $('portfolioSummary').textContent='No data'; return; }
+  const u=leaveUsage(empId);
+  $('portfolioSummary').innerHTML = `<b>${emp.name}</b> ｜ Sick Leave: <b>${u.sick}</b> ｜ Annual Leave: <b>${u.annual}</b>`;
+}
+
 function renderEmployees(){
-  $('employeesRows').innerHTML=db.employees.map(e=>`<tr><td>${e.id}</td><td>${e.name}</td><td>${e.department}</td><td>${e.role}</td><td>${e.payType}</td><td>${e.country}</td><td><button class="ghost" onclick="editEmployee('${e.id}')">Edit</button> <button class="secondary" onclick="deleteEmployee('${e.id}')">Delete</button></td></tr>`).join('');
+  $('employeesRows').innerHTML=db.employees.map(e=>{
+    const u=leaveUsage(e.id);
+    return `<tr><td>${e.id}</td><td>${e.name}</td><td>${e.department}</td><td>${e.role}</td><td>${e.payType}</td><td>${e.country}</td><td>${u.sick}</td><td>${u.annual}</td><td><button class="ghost" onclick="editEmployee('${e.id}')">Edit</button> <button class="secondary" onclick="deleteEmployee('${e.id}')">Delete</button></td></tr>`;
+  }).join('');
 }
 
 window.editEmployee=function(id){
@@ -329,7 +355,7 @@ window.deleteEmployee=function(id){
   db.schedules=db.schedules.filter(s=>s.employeeId!==id);
   db.attendance=db.attendance.filter(a=>a.employeeId!==id);
   db.exceptions=db.exceptions.filter(x=>x.employeeId!==id);
-  save(); renderEmployees(); renderSelectors(); renderWeekCalendar(); renderAttendance(); renderExceptions(); renderApproval(); runPayroll(); renderCountryRulePanel();
+  save(); renderEmployees(); renderSelectors(); renderPortfolio(); renderWeekCalendar(); renderAttendance(); renderExceptions(); renderApproval(); runPayroll(); renderCountryRulePanel();
 };
 function renderSchedule(){
   // visual calendar is now the primary schedule surface
@@ -535,7 +561,7 @@ $('addEmployee').onclick=()=>{
     if(db.employees.some(x=>x.id===e.id)){ alert('Employee ID already exists'); return; }
     db.employees.push(e);
   }
-  save(); renderEmployees(); renderSelectors(); resetEmployeeForm(); renderCountryRulePanel();
+  save(); renderEmployees(); renderSelectors(); renderPortfolio(); resetEmployeeForm(); renderCountryRulePanel();
 };
 
 $('applyTemplate').onclick=()=>{
@@ -653,7 +679,7 @@ $('addException').onclick=()=>{
   const x={id:uid(),employeeId:$('exEmployee').value,date:$('exDate').value,type:$('exType').value,hours:Number($('exHours').value||0),details:$('exDetails').value.trim(),status:'PENDING'};
   if(!x.employeeId||!x.date){alert('Employee and date required');return;}
   if(x.type==='MEDICAL' && !x.details){alert('Medical certificate details required');return;}
-  db.exceptions.push(x); save(); renderExceptions(); renderApproval(); renderAttendance();
+  db.exceptions.push(x); save(); renderExceptions(); renderApproval(); renderAttendance(); renderEmployees(); renderPortfolio();
 };
 
 $('runPayroll').onclick=runPayroll;
@@ -696,6 +722,7 @@ $('payrollEmployeeFocus').onchange=()=>{ renderCountryRulePanel(); runPayroll();
 $('prCountry').onchange=()=>{ renderCountryRulePanel(); runPayroll(); };
 $('customTaxPct').oninput=()=>{ renderCountryRulePanel(); if($('ruleMode').value==='custom') runPayroll(); };
 $('customBenPct').oninput=()=>{ renderCountryRulePanel(); if($('ruleMode').value==='custom') runPayroll(); };
+$('portfolioEmployee').onchange=renderPortfolio;
 $('schEmployee').onchange=renderWeekCalendar;
 $('tplWeekStart').onchange=renderWeekCalendar;
 $('tplWeekStart').onclick=()=>{ if($('tplWeekStart').showPicker) $('tplWeekStart').showPicker(); };
@@ -707,7 +734,7 @@ $('manualDate').onclick=()=>{ if($('manualDate').showPicker) $('manualDate').sho
   t.classList.add('active'); $(t.dataset.tab).classList.add('active');
 });
 
-renderEmployees(); renderSelectors(); renderSchedule(); renderAttendance(); renderExceptions(); renderApproval(); renderWeekCalendar(); runPayroll(); resetEmployeeForm(); syncTemplateUI(); renderCountryRulePanel();
+renderEmployees(); renderSelectors(); renderPortfolio(); renderSchedule(); renderAttendance(); renderExceptions(); renderApproval(); renderWeekCalendar(); runPayroll(); resetEmployeeForm(); syncTemplateUI(); renderCountryRulePanel();
 </script>
 </body>
 </html>
