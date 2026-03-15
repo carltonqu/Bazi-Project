@@ -14,6 +14,7 @@
     .tab.active{background:#4f7cff;border-color:#4f7cff}
     .panel{display:none;background:#151c33;border:1px solid #283253;border-radius:14px;padding:14px}
     .panel.active{display:block}
+    .card{background:#111833;border:1px solid #2a355b;border-radius:10px;padding:10px}
     .row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px}
     .row.three{grid-template-columns:repeat(3,1fr)}
     .row.two{grid-template-columns:repeat(2,1fr)}
@@ -30,6 +31,7 @@
     .pill b{display:block;font-size:18px}
     .ok{color:#78e08f}.warn{color:#ffd166}.bad{color:#ff7b7b}
     .chip{display:inline-block;padding:2px 8px;border-radius:999px;background:#25335b;font-size:11px}
+    .hidden{display:none !important}
     @media (max-width: 1000px){.row{grid-template-columns:repeat(2,1fr)}.kpi{grid-template-columns:repeat(2,1fr)}}
   </style>
 </head>
@@ -57,12 +59,13 @@
     </div>
     <div class="row">
       <div class="field"><label>Pay Type</label><select id="empPayType"><option value="hourly">Hourly</option><option value="monthly">Monthly</option></select></div>
-      <div class="field"><label>Hourly Rate</label><input id="empHourly" type="number" value="20"></div>
-      <div class="field"><label>Monthly Salary</label><input id="empMonthly" type="number" value="3000"></div>
+      <div class="field" id="hourlyField"><label>Hourly Rate</label><input id="empHourly" type="number" value="20"></div>
+      <div class="field hidden" id="monthlyField"><label>Monthly Salary</label><input id="empMonthly" type="number" value="3000"></div>
       <div class="field"><label>Country</label><select id="empCountry"><option>US</option><option>AU</option><option>PH</option></select></div>
     </div>
-    <button id="addEmployee">Add Employee</button>
-    <table><thead><tr><th>ID</th><th>Name</th><th>Department</th><th>Role</th><th>Pay Type</th><th>Country</th></tr></thead><tbody id="employeesRows"></tbody></table>
+    <button id="addEmployee">Save Employee</button>
+    <button class="secondary" id="cancelEditEmployee">Cancel Edit</button>
+    <table><thead><tr><th>ID</th><th>Name</th><th>Department</th><th>Role</th><th>Pay Type</th><th>Country</th><th>Actions</th></tr></thead><tbody id="employeesRows"></tbody></table>
   </section>
 
   <section id="schedule" class="panel">
@@ -97,17 +100,23 @@
       </div>
     </div>
 
-    <div class="row three">
-      <div class="field"><label>&nbsp;</label><button class="secondary" id="copyToNext">Copy this week → next week</button></div>
-      <div class="field"><label>&nbsp;</label><button class="secondary" id="copyFromPrev">Copy from previous week</button></div>
-      <div class="field"><label>&nbsp;</label><button class="secondary" id="dupToEmployee">Duplicate to another employee</button></div>
-    </div>
-
     <div class="row two">
-      <div class="field"><label>Duplicate target employee</label><select id="dupEmployee"></select></div>
+      <div class="field"><label>&nbsp;</label><button class="secondary" id="copyToNext">Copy this week → next week</button></div>
       <div class="field"><label>Manual single shift date</label><input id="manualDate" type="date"></div>
     </div>
     <button id="addSingleShift">Add Single Shift</button>
+
+    <details style="margin-top:10px;">
+      <summary class="small" style="cursor:pointer;">More actions</summary>
+      <div class="row two" style="margin-top:8px;">
+        <div class="field"><label>&nbsp;</label><button class="secondary" id="copyFromPrev">Copy from previous week</button></div>
+        <div class="field"><label>&nbsp;</label><button class="secondary" id="dupToEmployee">Duplicate to another employee</button></div>
+      </div>
+      <div class="row two">
+        <div class="field"><label>Duplicate target employee</label><select id="dupEmployee"></select></div>
+        <div class="field"><label>&nbsp;</label><div class="small">Advanced operations are hidden by default.</div></div>
+      </div>
+    </details>
 
     <h4 style="margin:12px 0 6px;">Weekly calendar blocks</h4>
     <div id="weekCalendarGrid" style="display:grid;grid-template-columns:repeat(7,minmax(130px,1fr));gap:8px;"></div>
@@ -211,6 +220,7 @@ const countryRules={
 const $=id=>document.getElementById(id);
 const uid=()=>Math.random().toString(36).slice(2,10);
 let activeTemplate='MON_FRI';
+let editingEmployeeId=null;
 function save(){
   localStorage.setItem('sp_employees',JSON.stringify(db.employees));
   localStorage.setItem('sp_schedules',JSON.stringify(db.schedules));
@@ -236,14 +246,41 @@ function parseWeekStart(v){
 function selectedCustomDays(){
   return [...document.querySelectorAll('.day-btn.active')].map(b=>Number(b.dataset.day));
 }
+function togglePayFields(){
+  const isHourly=$('empPayType').value==='hourly';
+  $('hourlyField').classList.toggle('hidden',!isHourly);
+  $('monthlyField').classList.toggle('hidden',isHourly);
+}
+function resetEmployeeForm(){
+  editingEmployeeId=null;
+  $('empId').value=''; $('empName').value=''; $('empDept').value=''; $('empRole').value='';
+  $('empPayType').value='hourly'; $('empHourly').value='20'; $('empMonthly').value='3000'; $('empCountry').value='US';
+  togglePayFields();
+}
 
 function renderSelectors(){
   const opts=db.employees.map(e=>`<option value="${e.id}">${e.id} - ${e.name}</option>`).join('');
   ['schEmployee','attEmployee','exEmployee','dupEmployee'].forEach(id=>$(id).innerHTML=opts);
 }
 function renderEmployees(){
-  $('employeesRows').innerHTML=db.employees.map(e=>`<tr><td>${e.id}</td><td>${e.name}</td><td>${e.department}</td><td>${e.role}</td><td>${e.payType}</td><td>${e.country}</td></tr>`).join('');
+  $('employeesRows').innerHTML=db.employees.map(e=>`<tr><td>${e.id}</td><td>${e.name}</td><td>${e.department}</td><td>${e.role}</td><td>${e.payType}</td><td>${e.country}</td><td><button class="ghost" onclick="editEmployee('${e.id}')">Edit</button> <button class="secondary" onclick="deleteEmployee('${e.id}')">Delete</button></td></tr>`).join('');
 }
+
+window.editEmployee=function(id){
+  const e=db.employees.find(x=>x.id===id); if(!e) return;
+  editingEmployeeId=id;
+  $('empId').value=e.id; $('empName').value=e.name; $('empDept').value=e.department; $('empRole').value=e.role;
+  $('empPayType').value=e.payType; $('empHourly').value=e.hourly||0; $('empMonthly').value=e.monthly||0; $('empCountry').value=e.country;
+  togglePayFields();
+};
+
+window.deleteEmployee=function(id){
+  db.employees=db.employees.filter(e=>e.id!==id);
+  db.schedules=db.schedules.filter(s=>s.employeeId!==id);
+  db.attendance=db.attendance.filter(a=>a.employeeId!==id);
+  db.exceptions=db.exceptions.filter(x=>x.employeeId!==id);
+  save(); renderEmployees(); renderSelectors(); renderWeekCalendar(); renderAttendance(); renderExceptions(); renderApproval(); runPayroll();
+};
 function renderSchedule(){
   // visual calendar is now the primary schedule surface
 }
@@ -340,7 +377,15 @@ function exportPayroll(){
 $('addEmployee').onclick=()=>{
   const e={id:$('empId').value.trim(),name:$('empName').value.trim(),department:$('empDept').value.trim(),role:$('empRole').value.trim(),payType:$('empPayType').value,hourly:Number($('empHourly').value||0),monthly:Number($('empMonthly').value||0),country:$('empCountry').value};
   if(!e.id||!e.name||!e.department){alert('Employee ID, Name, Department are required');return;}
-  db.employees.push(e); save(); renderEmployees(); renderSelectors();
+
+  if(editingEmployeeId){
+    const idx=db.employees.findIndex(x=>x.id===editingEmployeeId);
+    if(idx>=0) db.employees[idx]=e;
+  } else {
+    if(db.employees.some(x=>x.id===e.id)){ alert('Employee ID already exists'); return; }
+    db.employees.push(e);
+  }
+  save(); renderEmployees(); renderSelectors(); resetEmployeeForm();
 };
 
 $('applyTemplate').onclick=()=>{
@@ -459,6 +504,8 @@ $('addException').onclick=()=>{
 
 $('runPayroll').onclick=runPayroll;
 $('exportPayroll').onclick=exportPayroll;
+$('empPayType').onchange=togglePayFields;
+$('cancelEditEmployee').onclick=resetEmployeeForm;
 
 [...document.querySelectorAll('.day-btn')].forEach(btn=>{
   if(['1','2','3','4','5'].includes(btn.dataset.day)) btn.classList.add('active');
@@ -480,7 +527,7 @@ $('tplWeekStart').onchange=renderWeekCalendar;
   t.classList.add('active'); $(t.dataset.tab).classList.add('active');
 });
 
-renderEmployees(); renderSelectors(); renderSchedule(); renderAttendance(); renderExceptions(); renderApproval(); renderWeekCalendar(); runPayroll();
+renderEmployees(); renderSelectors(); renderSchedule(); renderAttendance(); renderExceptions(); renderApproval(); renderWeekCalendar(); runPayroll(); resetEmployeeForm();
 </script>
 </body>
 </html>
