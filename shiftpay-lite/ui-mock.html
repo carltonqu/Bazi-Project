@@ -33,21 +33,34 @@
     .ok{color:#78e08f}.warn{color:#ffd166}.bad{color:#ff7b7b}
     .chip{display:inline-block;padding:2px 8px;border-radius:999px;background:#25335b;font-size:11px}
     .hidden{display:none !important}
+    .lang-gate{position:fixed;inset:0;background:rgba(5,10,20,.92);display:flex;align-items:center;justify-content:center;z-index:9999}
+    .lang-box{background:#151c33;border:1px solid #283253;border-radius:14px;padding:20px;max-width:420px;width:92%}
+    .lang-actions{display:flex;gap:10px;margin-top:12px}
     @media (max-width: 1000px){.row{grid-template-columns:repeat(2,1fr)}.kpi{grid-template-columns:repeat(2,1fr)}}
   </style>
 </head>
 <body>
+<div id="langGate" class="lang-gate">
+  <div class="lang-box">
+    <h3 style="margin:0 0 8px;">Choose language / 选择语言</h3>
+    <div class="small">Please choose your preferred language before entering ClockRoster.</div>
+    <div class="lang-actions">
+      <button id="chooseEN">English</button>
+      <button class="secondary" id="chooseZH">中文</button>
+    </div>
+  </div>
+</div>
 <div class="wrap">
-  <h1>ClockRoster · Usable HR Workflow</h1>
-  <div class="small">End-to-end: Employee setup → Fast schedule templates → Employee clocking → Variance & exception → OT approval → Payroll export</div>
+  <h1 id="pageTitle">ClockRoster · Usable HR Workflow</h1>
+  <div id="pageSubtitle" class="small">End-to-end: Employee setup → Fast schedule templates → Employee clocking → Variance & exception → OT approval → Payroll export</div>
 
   <div class="tabs">
-    <div class="tab active" data-tab="employees">1) Employees</div>
-    <div class="tab" data-tab="schedule">2) Scheduling</div>
-    <div class="tab" data-tab="attendance">3) Attendance System</div>
-    <div class="tab" data-tab="exceptions">4) Exceptions</div>
-    <div class="tab" data-tab="approval">5) OT Approval</div>
-    <div class="tab" data-tab="payroll">6) Payroll</div>
+    <div class="tab active" data-tab="employees" id="tabEmployees">1) Employees</div>
+    <div class="tab" data-tab="schedule" id="tabSchedule">2) Scheduling</div>
+    <div class="tab" data-tab="attendance" id="tabAttendance">3) Attendance System</div>
+    <div class="tab" data-tab="exceptions" id="tabExceptions">4) Exceptions</div>
+    <div class="tab" data-tab="approval" id="tabApproval">5) OT Approval</div>
+    <div class="tab" data-tab="payroll" id="tabPayroll">6) Payroll</div>
   </div>
 
   <section id="employees" class="panel active">
@@ -785,7 +798,27 @@ $('manualDate').onclick=()=>{ if($('manualDate').showPicker) $('manualDate').sho
   t.classList.add('active'); $(t.dataset.tab).classList.add('active');
 });
 
+function applyLanguage(lang){
+  const zh = lang==='zh';
+  document.documentElement.lang = zh ? 'zh-CN' : 'en';
+  $('pageTitle').textContent = zh ? 'ClockRoster · HR工作流' : 'ClockRoster · Usable HR Workflow';
+  $('pageSubtitle').textContent = zh
+    ? '端到端：员工建档 → 模板排班 → 员工打卡 → 差异与异常 → OT审批 → 薪资导出'
+    : 'End-to-end: Employee setup → Fast schedule templates → Employee clocking → Variance & exception → OT approval → Payroll export';
+  $('tabEmployees').textContent = zh ? '1) 员工' : '1) Employees';
+  $('tabSchedule').textContent = zh ? '2) 排班' : '2) Scheduling';
+  $('tabAttendance').textContent = zh ? '3) 考勤系统' : '3) Attendance System';
+  $('tabExceptions').textContent = zh ? '4) 异常' : '4) Exceptions';
+  $('tabApproval').textContent = zh ? '5) OT审批' : '5) OT Approval';
+  $('tabPayroll').textContent = zh ? '6) 薪资' : '6) Payroll';
+}
+
+$('chooseEN').onclick=()=>{ localStorage.setItem('clockroster_lang','en'); applyLanguage('en'); $('langGate').classList.add('hidden'); };
+$('chooseZH').onclick=()=>{ localStorage.setItem('clockroster_lang','zh'); applyLanguage('zh'); $('langGate').classList.add('hidden'); };
+
 renderEmployees(); renderSelectors(); renderPortfolio(); renderSchedule(); renderAttendance(); renderExceptions(); renderApproval(); renderWeekCalendar(); runPayroll(); resetEmployeeForm(); syncTemplateUI(); renderCountryRulePanel();
+const savedLang = localStorage.getItem('clockroster_lang');
+if(savedLang){ applyLanguage(savedLang); $('langGate').classList.add('hidden'); }
 </script>
 </body>
 </html>
