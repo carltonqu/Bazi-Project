@@ -1,214 +1,306 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ShiftPay Lite UI Mock</title>
+  <title>ShiftPay Lite - End-to-End HR Flow</title>
   <style>
     body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#0b1020;color:#e8eefc;margin:0}
-    .wrap{max-width:1180px;margin:24px auto;padding:0 16px}
-    .grid{display:grid;grid-template-columns:320px 1fr;gap:16px;align-items:start}
-    .card{background:#151c33;border:1px solid #283253;border-radius:14px;padding:14px}
-    h1{font-size:20px;margin:0 0 12px}
-    h2{font-size:15px;margin:0 0 10px;color:#b8c6ef}
+    .wrap{max-width:1200px;margin:20px auto;padding:0 16px}
+    h1{font-size:22px;margin:0 0 12px}
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+    .tab{padding:8px 12px;border:1px solid #33416f;border-radius:10px;background:#121a33;cursor:pointer}
+    .tab.active{background:#4f7cff;border-color:#4f7cff}
+    .panel{display:none;background:#151c33;border:1px solid #283253;border-radius:14px;padding:14px}
+    .panel.active{display:block}
+    .row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px}
+    .row.two{grid-template-columns:repeat(2,1fr)}
+    .field{display:flex;flex-direction:column;gap:6px}
+    .field label{font-size:12px;color:#9fb0e2}
+    input,select,button,textarea{width:100%;padding:10px;border-radius:10px;border:1px solid #32406b;background:#0f1630;color:#e8eefc;box-sizing:border-box}
+    button{background:#4f7cff;border:none;font-weight:700;cursor:pointer}
+    button.secondary{background:#2f406f}
+    table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+    th,td{padding:8px;border-bottom:1px solid #2a355b;text-align:left;vertical-align:top}
     .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
     .pill{background:#1d2644;border-radius:10px;padding:10px}
     .pill b{display:block;font-size:18px}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .field{display:flex;flex-direction:column;gap:6px}
-    .field label{font-size:12px;color:#9fb0e2}
-    input,select,button{width:100%;padding:10px;border-radius:10px;border:1px solid #32406b;background:#0f1630;color:#e8eefc;box-sizing:border-box}
-    button{background:#4f7cff;border:none;font-weight:700;cursor:pointer}
-    table{width:100%;border-collapse:collapse;font-size:13px}
-    th,td{padding:8px;border-bottom:1px solid #2a355b;text-align:left}
-    .ok{color:#78e08f}.warn{color:#ffd166}
-    .footer{margin-top:14px;font-size:12px;color:#9fb0e2}
+    .ok{color:#78e08f}.warn{color:#ffd166}.bad{color:#ff7b7b}
     .small{font-size:12px;color:#9fb0e2}
-    @media (max-width: 980px){
-      .grid{grid-template-columns:1fr}
-      .kpi{grid-template-columns:repeat(2,1fr)}
-    }
+    @media (max-width: 1000px){.row{grid-template-columns:repeat(2,1fr)}.kpi{grid-template-columns:repeat(2,1fr)}}
   </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>ShiftPay Lite · MVP Interactive Preview</h1>
-  <div class="grid">
-    <div class="card">
-      <h2>Settings</h2>
-      <div class="field"><label>Language</label><select id="lang"><option value="en">English</option><option value="zh">中文</option></select></div>
-      <div class="field" style="margin-top:10px"><label>Country Rule</label><select id="country"><option value="US">US</option><option value="PH">PH</option><option value="AU">AU</option></select></div>
-      <div class="row" style="margin-top:10px">
-        <div class="field"><label>Currency</label><select id="currency"><option>USD</option><option>PHP</option><option>AUD</option></select></div>
-        <div class="field"><label>Hourly Rate</label><input id="rate" type="number" value="20"/></div>
-      </div>
-      <div class="row" style="margin-top:10px">
-        <div class="field"><label>OT Threshold (h/week)</label><input id="otThreshold" type="number" value="40"/></div>
-        <div class="field"><label>OT Multiplier</label><input id="otMul" type="number" step="0.01" value="1.5"/></div>
-      </div>
-      <div class="row" style="margin-top:10px">
-        <div class="field"><label>Night Start</label><input id="nightStart" value="22:00"/></div>
-        <div class="field"><label>Night End</label><input id="nightEnd" value="06:00"/></div>
-      </div>
-      <button style="margin-top:12px" id="applyRules">Apply Rules</button>
-      <div class="footer" id="disc">* Estimation tool, final payroll follows local law/contract.</div>
-    </div>
+  <h1>ShiftPay Lite · Functional HR Flow Demo</h1>
+  <div class="small">Flow: Employee → Schedule → Attendance → Exception → Approval → Payroll → Export</div>
 
-    <div>
-      <div class="card">
-        <h2>Week Summary</h2>
-        <div class="kpi">
-          <div class="pill"><span>Total Hours</span><b id="kpiHours">0h</b></div>
-          <div class="pill"><span>Overtime</span><b id="kpiOt">0h</b></div>
-          <div class="pill"><span>Night Hours</span><b id="kpiNight">0h</b></div>
-          <div class="pill"><span>Estimated Pay</span><b id="kpiPay">$0.00</b></div>
-        </div>
-      </div>
-
-      <div class="card" style="margin-top:12px">
-        <h2>Add Shift</h2>
-        <div class="row">
-          <div class="field"><label>Date</label><input id="date" type="date"/></div>
-          <div class="field"><label>Time Range</label><input id="timeRange" value="09:00-17:00"/></div>
-        </div>
-        <div class="row" style="margin-top:10px">
-          <div class="field"><label>Break Minutes</label><input id="breakMin" type="number" value="30"/></div>
-          <div class="field"><label>Day Type</label><select id="dayType"><option value="normal">Normal</option><option value="holiday">Holiday</option></select></div>
-        </div>
-        <button style="margin-top:12px" id="addShift">Add Shift</button>
-        <div class="small">Time format: HH:MM-HH:MM (supports overnight, e.g. 22:00-06:00)</div>
-      </div>
-
-      <div class="card" style="margin-top:12px">
-        <h2>Shift Records</h2>
-        <table>
-          <thead><tr><th>Date</th><th>Time</th><th>Type</th><th>Hours</th><th>Pay</th><th>Action</th></tr></thead>
-          <tbody id="rows"></tbody>
-        </table>
-      </div>
-
-      <div class="card" style="margin-top:12px">
-        <h2>Employee & Payroll Export</h2>
-        <div class="row">
-          <div class="field"><label>Employee ID</label><input id="empId" value="EMP-001"/></div>
-          <div class="field"><label>Employee Name</label><input id="empName" value="Alex Cruz"/></div>
-        </div>
-        <div class="row" style="margin-top:10px">
-          <div class="field"><label>Department</label><input id="department" value="Store A"/></div>
-          <div class="field"><label>Job Code</label><input id="jobCode" value="CASHIER"/></div>
-        </div>
-        <div class="row" style="margin-top:10px">
-          <div class="field"><label>Payroll Provider</label><select id="provider"><option value="GENERIC">GENERIC CSV</option><option value="ADP">ADP CSV</option><option value="GUSTO">GUSTO CSV</option></select></div>
-          <div class="field"><label>&nbsp;</label><button id="exportPayroll">Export Payroll CSV</button></div>
-        </div>
-        <button style="margin-top:10px;background:#2f406f" id="exportShift">Export Shifts CSV</button>
-        <div class="footer"><span class="ok">Free:</span> latest 1 period · <span class="warn">Pro:</span> unlimited</div>
-      </div>
-    </div>
+  <div class="tabs" id="tabs">
+    <div class="tab active" data-tab="employees">1) Employees</div>
+    <div class="tab" data-tab="schedule">2) Schedule</div>
+    <div class="tab" data-tab="attendance">3) Attendance</div>
+    <div class="tab" data-tab="exceptions">4) Exceptions</div>
+    <div class="tab" data-tab="approval">5) Supervisor OT Approval</div>
+    <div class="tab" data-tab="payroll">6) Payroll & Export</div>
   </div>
+
+  <section id="employees" class="panel active">
+    <h3>Create Employee</h3>
+    <div class="row">
+      <div class="field"><label>Employee ID</label><input id="empId" placeholder="EMP-001"></div>
+      <div class="field"><label>Name</label><input id="empName" placeholder="Alex Cruz"></div>
+      <div class="field"><label>Department</label><input id="empDept" placeholder="Accounting"></div>
+      <div class="field"><label>Role</label><input id="empRole" placeholder="Accountant"></div>
+    </div>
+    <div class="row">
+      <div class="field"><label>Pay Type</label><select id="empPayType"><option value="hourly">Hourly</option><option value="monthly">Monthly</option></select></div>
+      <div class="field"><label>Hourly Rate (if hourly)</label><input id="empHourly" type="number" value="20"></div>
+      <div class="field"><label>Monthly Salary (if monthly)</label><input id="empMonthly" type="number" value="3000"></div>
+      <div class="field"><label>Country</label><select id="empCountry"><option>US</option><option>AU</option><option>PH</option></select></div>
+    </div>
+    <button id="addEmployee">Add Employee</button>
+    <table><thead><tr><th>ID</th><th>Name</th><th>Dept</th><th>Role</th><th>Pay Type</th><th>Country</th></tr></thead><tbody id="employeesRows"></tbody></table>
+  </section>
+
+  <section id="schedule" class="panel">
+    <h3>HR Schedule Shifts</h3>
+    <div class="row">
+      <div class="field"><label>Employee</label><select id="schEmployee"></select></div>
+      <div class="field"><label>Date</label><input id="schDate" type="date"></div>
+      <div class="field"><label>Start</label><input id="schStart" value="09:00"></div>
+      <div class="field"><label>End</label><input id="schEnd" value="18:00"></div>
+    </div>
+    <div class="row two">
+      <div class="field"><label>Break Minutes</label><input id="schBreak" type="number" value="60"></div>
+      <div class="field"><label>Shift Type</label><select id="schType"><option value="normal">Normal</option><option value="holiday">Holiday</option></select></div>
+    </div>
+    <button id="addSchedule">Add Schedule</button>
+    <table><thead><tr><th>Employee</th><th>Date</th><th>Shift</th><th>Break</th><th>Type</th></tr></thead><tbody id="scheduleRows"></tbody></table>
+  </section>
+
+  <section id="attendance" class="panel">
+    <h3>Employee Clock In / Out</h3>
+    <div class="row">
+      <div class="field"><label>Employee</label><select id="attEmployee"></select></div>
+      <div class="field"><label>Date</label><input id="attDate" type="date"></div>
+      <div class="field"><label>Clock In</label><input id="attIn" value="09:05"></div>
+      <div class="field"><label>Clock Out</label><input id="attOut" value="18:20"></div>
+    </div>
+    <div class="row two">
+      <div class="field"><label>Break Minutes</label><input id="attBreak" type="number" value="60"></div>
+      <div class="field"><label>Capture Type</label><select id="attCapture"><option>mobile-gps</option><option>fingerprint</option></select></div>
+    </div>
+    <button id="saveAttendance">Save Attendance</button>
+    <table><thead><tr><th>Employee</th><th>Date</th><th>Actual</th><th>Scheduled Hrs</th><th>Actual Hrs</th><th>Variance</th><th>Status</th></tr></thead><tbody id="attendanceRows"></tbody></table>
+  </section>
+
+  <section id="exceptions" class="panel">
+    <h3>Employee Exception Submission</h3>
+    <div class="row">
+      <div class="field"><label>Employee</label><select id="exEmployee"></select></div>
+      <div class="field"><label>Date</label><input id="exDate" type="date"></div>
+      <div class="field"><label>Type</label><select id="exType"><option value="OT">OT Request</option><option value="ABSENT">Absent</option><option value="MEDICAL">Medical Certificate</option><option value="LATE">Late Reason</option></select></div>
+      <div class="field"><label>Hours (for OT)</label><input id="exHours" type="number" step="0.25" value="1.5"></div>
+    </div>
+    <div class="field"><label>Details</label><textarea id="exDetails" rows="3" placeholder="Reason / certificate note"></textarea></div>
+    <button id="addException">Submit Exception</button>
+    <table><thead><tr><th>Employee</th><th>Date</th><th>Type</th><th>Hours</th><th>Details</th><th>Status</th></tr></thead><tbody id="exceptionRows"></tbody></table>
+  </section>
+
+  <section id="approval" class="panel">
+    <h3>Supervisor OT Approval</h3>
+    <table><thead><tr><th>Employee</th><th>Date</th><th>Type</th><th>Hours</th><th>Details</th><th>Status</th><th>Action</th></tr></thead><tbody id="approvalRows"></tbody></table>
+  </section>
+
+  <section id="payroll" class="panel">
+    <h3>HR Payroll Run & Export</h3>
+    <div class="row">
+      <div class="field"><label>Payroll Country View</label><select id="prCountry"><option>ALL</option><option>US</option><option>AU</option><option>PH</option></select></div>
+      <div class="field"><label>Payroll Month (YYYY-MM)</label><input id="prMonth" value="2026-03"></div>
+      <div class="field"><label>Tax % (fallback)</label><input id="taxPct" type="number" step="0.1" value="10"></div>
+      <div class="field"><label>Benefits % (fallback)</label><input id="benPct" type="number" step="0.1" value="8"></div>
+    </div>
+    <button id="runPayroll">Run Payroll</button>
+    <button class="secondary" id="exportPayroll">Export Payroll CSV</button>
+    <div class="kpi" style="margin-top:12px">
+      <div class="pill"><span>Employees</span><b id="kEmp">0</b></div>
+      <div class="pill"><span>Total Gross</span><b id="kGross">0</b></div>
+      <div class="pill"><span>Total Deductions</span><b id="kDed">0</b></div>
+      <div class="pill"><span>Total Net</span><b id="kNet">0</b></div>
+    </div>
+    <table><thead><tr><th>Employee</th><th>Dept</th><th>Country</th><th>Base</th><th>OT</th><th>Tax</th><th>Benefits</th><th>Net Pay</th></tr></thead><tbody id="payrollRows"></tbody></table>
+  </section>
 </div>
 
 <script>
-const presets={
-  US:{currency:'USD',ot:40,otMul:1.5,nightMul:1.1,holidayMul:2},
-  PH:{currency:'PHP',ot:40,otMul:1.25,nightMul:1.1,holidayMul:2},
-  AU:{currency:'AUD',ot:38,otMul:1.5,nightMul:1.15,holidayMul:2}
+const db = {
+  employees: JSON.parse(localStorage.getItem('sp_employees')||'[]'),
+  schedules: JSON.parse(localStorage.getItem('sp_schedules')||'[]'),
+  attendance: JSON.parse(localStorage.getItem('sp_attendance')||'[]'),
+  exceptions: JSON.parse(localStorage.getItem('sp_exceptions')||'[]'),
+  payroll: []
 };
-let shifts=[];
-let rule={...presets.US,rate:20};
+
+const countryRules = {
+  US:{otMul:1.5, tax:12, ben:7.65, currency:'USD'},
+  AU:{otMul:1.5, tax:19, ben:11, currency:'AUD'},
+  PH:{otMul:1.25,tax:8, ben:6, currency:'PHP'}
+};
 
 const $=id=>document.getElementById(id);
-function money(v){return new Intl.NumberFormat(undefined,{style:'currency',currency:$("currency").value}).format(v)}
-function parseMinutes(range){
-  const [a,b]=range.split('-').map(x=>x.trim());
-  const [ah,am]=a.split(':').map(Number); const [bh,bm]=b.split(':').map(Number);
-  let s=ah*60+am,e=bh*60+bm; if(e<=s)e+=24*60; return [s,e];
-}
-function isNight(min){
-  const ns=22*60, ne=6*60;
-  const m=min%(24*60);
-  return m>=ns || m<ne;
-}
-function recalc(){
-  let totalMin=0, nightMin=0, pay=0;
-  const otStart=Number($("otThreshold").value||40)*60;
-  const rate=Number($("rate").value||0)/60;
-  let rows='';
-  shifts.forEach((s,idx)=>{
-    const [st,en]=parseMinutes(s.range);
-    const raw=en-st;
-    const paid=Math.max(0,raw-s.breakMin);
-    let sp=0, sn=0;
-    for(let i=0;i<paid;i++){
-      const globalMin=totalMin+i;
-      const otMul=globalMin>=otStart?Number($("otMul").value||1.5):1;
-      const n=isNight(st+i)?rule.nightMul:1; if(n>1)sn++;
-      const h=s.type==='holiday'?rule.holidayMul:1;
-      sp += rate*otMul*n*h;
-    }
-    totalMin += paid;
-    nightMin += sn;
-    pay += sp;
-    rows += `<tr><td>${s.date}</td><td>${s.range}</td><td>${s.type}</td><td>${(paid/60).toFixed(2)}h</td><td>${money(sp)}</td><td><button onclick="delShift(${idx})">x</button></td></tr>`;
-  });
-  $("rows").innerHTML=rows;
-  const otMin=Math.max(0,totalMin-otStart);
-  $("kpiHours").textContent=(totalMin/60).toFixed(2)+'h';
-  $("kpiOt").textContent=(otMin/60).toFixed(2)+'h';
-  $("kpiNight").textContent=(nightMin/60).toFixed(2)+'h';
-  $("kpiPay").textContent=money(pay);
-}
-function delShift(i){shifts.splice(i,1);recalc()} window.delShift=delShift;
+const uid=()=>Math.random().toString(36).slice(2,10);
 
-$("country").addEventListener('change',()=>{
-  const p=presets[$("country").value];
-  $("currency").value=p.currency; $("otThreshold").value=p.ot; $("otMul").value=p.otMul;
-  rule={...rule,...p}; recalc();
-});
-$("applyRules").addEventListener('click',()=>recalc());
-$("addShift").addEventListener('click',()=>{
-  const date=$("date").value||new Date().toISOString().slice(0,10);
-  const range=$("timeRange").value;
-  if(!/^\d{2}:\d{2}\s*-\s*\d{2}:\d{2}$/.test(range)){alert('Invalid time range');return}
-  shifts.push({date,range,breakMin:Number($("breakMin").value||0),type:$("dayType").value});
-  recalc();
-});
-function download(name,text){
-  const blob=new Blob([text],{type:'text/csv'});const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);a.download=name;a.click();URL.revokeObjectURL(a.href);
+function save(){
+  localStorage.setItem('sp_employees',JSON.stringify(db.employees));
+  localStorage.setItem('sp_schedules',JSON.stringify(db.schedules));
+  localStorage.setItem('sp_attendance',JSON.stringify(db.attendance));
+  localStorage.setItem('sp_exceptions',JSON.stringify(db.exceptions));
 }
-function requireEmployee(){
-  const need=['empId','empName','department','jobCode'];
-  const miss=need.filter(id=>!$(id).value.trim());
-  if(miss.length){ alert('Please fill employee fields: '+miss.join(', ')); return false; }
-  return true;
+
+function mins(t){ const [h,m]=t.split(':').map(Number); return h*60+m; }
+function hoursBetween(start,end,breakMin=0){ let d=mins(end)-mins(start); if(d<=0)d+=1440; return Math.max(0,(d-breakMin)/60); }
+function money(v,c='USD'){ return new Intl.NumberFormat(undefined,{style:'currency',currency:c}).format(v); }
+
+function renderSelectors(){
+  const opts=db.employees.map(e=>`<option value="${e.id}">${e.id} - ${e.name}</option>`).join('');
+  ['schEmployee','attEmployee','exEmployee'].forEach(id=>$(id).innerHTML=opts);
 }
-$("exportShift").addEventListener('click',()=>{
-  const csv=['date,range,breakMin,type',...shifts.map(s=>`${s.date},${s.range},${s.breakMin},${s.type}`)].join('\n');
-  download('shifts.csv',csv);
-});
-$("exportPayroll").addEventListener('click',()=>{
-  if(!requireEmployee()) return;
-  const empId=$("empId").value.trim();
-  const empName=$("empName").value.trim();
-  const dept=$("department").value.trim();
-  const job=$("jobCode").value.trim();
-  const provider=$("provider").value;
-  let header=''; let rows=[];
-  if(provider==='ADP'){
-    header='Employee ID,Employee Name,Department,Job Code,Date,Hours,Earnings Code,Notes';
-    rows=shifts.map(s=>`${empId},${empName},${dept},${job},${s.date},7.5,${s.type==='holiday'?'HOL':'REG'},`)
-  } else if(provider==='GUSTO'){
-    header='employee_id,employee_name,department,job_code,work_date,hours,job,memo';
-    rows=shifts.map(s=>`${empId},${empName},${dept},${job},${s.date},7.5,${job},`)
-  } else {
-    header='employeeId,employeeName,department,jobCode,date,range,breakMin,type';
-    rows=shifts.map(s=>`${empId},${empName},${dept},${job},${s.date},${s.range},${s.breakMin},${s.type}`)
-  }
-  download(`payroll_${provider.toLowerCase()}.csv`,[header,...rows].join('\n'));
+
+function renderEmployees(){
+  $('employeesRows').innerHTML=db.employees.map(e=>`<tr><td>${e.id}</td><td>${e.name}</td><td>${e.department}</td><td>${e.role}</td><td>${e.payType}</td><td>${e.country}</td></tr>`).join('');
+}
+
+function renderSchedule(){
+  $('scheduleRows').innerHTML=db.schedules.map(s=>`<tr><td>${s.employeeId}</td><td>${s.date}</td><td>${s.start}-${s.end}</td><td>${s.breakMin}</td><td>${s.type}</td></tr>`).join('');
+}
+
+function compareAttendance(att){
+  const sch=db.schedules.find(s=>s.employeeId===att.employeeId && s.date===att.date);
+  const schH=sch?hoursBetween(sch.start,sch.end,sch.breakMin):0;
+  const actH=hoursBetween(att.in,att.out,att.breakMin);
+  const varH=(actH-schH).toFixed(2);
+  let status='MATCH';
+  if(!sch) status='NO_SCHEDULE';
+  else if(Number(varH)>0.25) status='OT_CANDIDATE';
+  else if(Number(varH)<-0.25) status='UNDER_TIME';
+  return {schH,actH,varH,status};
+}
+
+function renderAttendance(){
+  $('attendanceRows').innerHTML=db.attendance.map(a=>{
+    const c=compareAttendance(a);
+    const cls=c.status==='MATCH'?'ok':(c.status==='OT_CANDIDATE'?'warn':'bad');
+    return `<tr><td>${a.employeeId}</td><td>${a.date}</td><td>${a.in}-${a.out}</td><td>${c.schH.toFixed(2)}</td><td>${c.actH.toFixed(2)}</td><td>${c.varH}</td><td class="${cls}">${c.status}</td></tr>`;
+  }).join('');
+}
+
+function renderExceptions(){
+  $('exceptionRows').innerHTML=db.exceptions.map(x=>`<tr><td>${x.employeeId}</td><td>${x.date}</td><td>${x.type}</td><td>${x.hours||''}</td><td>${x.details||''}</td><td>${x.status}</td></tr>`).join('');
+}
+
+function renderApproval(){
+  $('approvalRows').innerHTML=db.exceptions
+    .filter(x=>x.type==='OT')
+    .map(x=>`<tr><td>${x.employeeId}</td><td>${x.date}</td><td>${x.type}</td><td>${x.hours||0}</td><td>${x.details||''}</td><td>${x.status}</td><td>${x.status==='PENDING'?`<button onclick="approveOt('${x.id}')">Approve</button>`:'-'}</td></tr>`).join('');
+}
+
+window.approveOt=function(id){
+  const ex=db.exceptions.find(x=>x.id===id);
+  if(ex){ ex.status='APPROVED'; save(); renderExceptions(); renderApproval(); }
+}
+
+function calcBase(emp){
+  if(emp.payType==='monthly') return Number(emp.monthly||0);
+  const totalH=db.attendance
+    .filter(a=>a.employeeId===emp.id)
+    .reduce((sum,a)=>sum+compareAttendance(a).actH,0);
+  return totalH*Number(emp.hourly||0);
+}
+
+function calcOt(emp){
+  const rule=countryRules[emp.country]||countryRules.US;
+  const approved=db.exceptions
+    .filter(x=>x.employeeId===emp.id && x.type==='OT' && x.status==='APPROVED')
+    .reduce((s,x)=>s+Number(x.hours||0),0);
+  return approved*Number(emp.hourly||0)*rule.otMul;
+}
+
+function runPayroll(){
+  const viewCountry=$('prCountry').value;
+  const taxFallback=Number($('taxPct').value||0);
+  const benFallback=Number($('benPct').value||0);
+
+  db.payroll = db.employees
+    .filter(e=>viewCountry==='ALL'||e.country===viewCountry)
+    .map(emp=>{
+      const r=countryRules[emp.country]||{tax:taxFallback,ben:benFallback,currency:'USD'};
+      const base=calcBase(emp);
+      const ot=calcOt(emp);
+      const gross=base+ot;
+      const tax=gross*(r.tax/100);
+      const ben=gross*(r.ben/100);
+      const net=gross-tax-ben;
+      return {employeeId:emp.id,name:emp.name,department:emp.department,country:emp.country,currency:r.currency,base,ot,tax,benefits:ben,net};
+    });
+
+  $('payrollRows').innerHTML=db.payroll.map(p=>`<tr><td>${p.employeeId} - ${p.name}</td><td>${p.department}</td><td>${p.country}</td><td>${money(p.base,p.currency)}</td><td>${money(p.ot,p.currency)}</td><td>${money(p.tax,p.currency)}</td><td>${money(p.benefits,p.currency)}</td><td>${money(p.net,p.currency)}</td></tr>`).join('');
+
+  const gross=db.payroll.reduce((s,x)=>s+x.base+x.ot,0);
+  const ded=db.payroll.reduce((s,x)=>s+x.tax+x.benefits,0);
+  const net=db.payroll.reduce((s,x)=>s+x.net,0);
+  $('kEmp').textContent=String(db.payroll.length);
+  $('kGross').textContent=money(gross,'USD');
+  $('kDed').textContent=money(ded,'USD');
+  $('kNet').textContent=money(net,'USD');
+}
+
+function exportPayroll(){
+  if(!db.payroll.length){ alert('Run payroll first'); return; }
+  const header='employeeId,name,department,country,currency,base,ot,tax,benefits,netPay';
+  const rows=db.payroll.map(p=>[p.employeeId,p.name,p.department,p.country,p.currency,p.base.toFixed(2),p.ot.toFixed(2),p.tax.toFixed(2),p.benefits.toFixed(2),p.net.toFixed(2)].join(','));
+  const blob=new Blob([[header,...rows].join('\n')],{type:'text/csv'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='payroll_export.csv'; a.click(); URL.revokeObjectURL(a.href);
+}
+
+$('addEmployee').onclick=()=>{
+  const e={
+    id:$('empId').value.trim(), name:$('empName').value.trim(), department:$('empDept').value.trim(), role:$('empRole').value.trim(),
+    payType:$('empPayType').value, hourly:Number($('empHourly').value||0), monthly:Number($('empMonthly').value||0), country:$('empCountry').value
+  };
+  if(!e.id||!e.name||!e.department){ alert('Employee ID, Name, Department are required'); return; }
+  db.employees.push(e); save(); renderEmployees(); renderSelectors();
+};
+
+$('addSchedule').onclick=()=>{
+  const s={id:uid(),employeeId:$('schEmployee').value,date:$('schDate').value,start:$('schStart').value,end:$('schEnd').value,breakMin:Number($('schBreak').value||0),type:$('schType').value};
+  if(!s.employeeId||!s.date){ alert('Employee and date required'); return; }
+  db.schedules.push(s); save(); renderSchedule();
+};
+
+$('saveAttendance').onclick=()=>{
+  const a={id:uid(),employeeId:$('attEmployee').value,date:$('attDate').value,in:$('attIn').value,out:$('attOut').value,breakMin:Number($('attBreak').value||0),capture:$('attCapture').value};
+  if(!a.employeeId||!a.date){ alert('Employee and date required'); return; }
+  db.attendance.push(a); save(); renderAttendance();
+};
+
+$('addException').onclick=()=>{
+  const x={id:uid(),employeeId:$('exEmployee').value,date:$('exDate').value,type:$('exType').value,hours:Number($('exHours').value||0),details:$('exDetails').value.trim(),status:'PENDING'};
+  if(!x.employeeId||!x.date){ alert('Employee and date required'); return; }
+  if(x.type==='MEDICAL' && !x.details){ alert('Medical certificate note required'); return; }
+  db.exceptions.push(x); save(); renderExceptions(); renderApproval();
+};
+
+$('runPayroll').onclick=runPayroll;
+$('exportPayroll').onclick=exportPayroll;
+
+// tabs
+[...document.querySelectorAll('.tab')].forEach(t=>t.onclick=()=>{
+  [...document.querySelectorAll('.tab')].forEach(x=>x.classList.remove('active'));
+  [...document.querySelectorAll('.panel')].forEach(x=>x.classList.remove('active'));
+  t.classList.add('active'); $(t.dataset.tab).classList.add('active');
 });
 
-$("country").dispatchEvent(new Event('change'));
+renderEmployees(); renderSelectors(); renderSchedule(); renderAttendance(); renderExceptions(); renderApproval(); runPayroll();
 </script>
 </body>
 </html>
