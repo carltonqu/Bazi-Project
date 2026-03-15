@@ -74,6 +74,13 @@
         <div class="field"><label>Select employee</label><select id="portfolioEmployee"></select></div>
         <div class="field"><label>Summary</label><div id="portfolioSummary" class="small">No data</div></div>
       </div>
+      <div class="row">
+        <div class="field"><label>Document Type</label><select id="docType"><option value="RESUME">Resume</option><option value="OFFER_LETTER">Offer Letter</option><option value="MEDICAL_CERT">Medical Certificate</option><option value="MEMO">Memo</option></select></div>
+        <div class="field"><label>Upload file (optional for memo)</label><input id="docFile" type="file"></div>
+        <div class="field"><label>Note</label><input id="docNote" placeholder="Short note"></div>
+        <div class="field"><label>&nbsp;</label><button id="saveDoc">Save Document</button></div>
+      </div>
+      <table><thead><tr><th>Type</th><th>File</th><th>Note</th><th>Saved At</th><th>Action</th></tr></thead><tbody id="portfolioDocsRows"></tbody></table>
     </div>
   </section>
 
@@ -237,6 +244,7 @@ const db={
   schedules:JSON.parse(localStorage.getItem('sp_schedules')||'[]'),
   attendance:JSON.parse(localStorage.getItem('sp_attendance')||'[]'),
   exceptions:JSON.parse(localStorage.getItem('sp_exceptions')||'[]'),
+  documents:JSON.parse(localStorage.getItem('sp_documents')||'[]'),
   payroll:[]
 };
 
@@ -275,6 +283,7 @@ function save(){
   localStorage.setItem('sp_schedules',JSON.stringify(db.schedules));
   localStorage.setItem('sp_attendance',JSON.stringify(db.attendance));
   localStorage.setItem('sp_exceptions',JSON.stringify(db.exceptions));
+  localStorage.setItem('sp_documents',JSON.stringify(db.documents));
 }
 function mins(t){const [h,m]=t.split(':').map(Number);return h*60+m}
 function hoursBetween(start,end,breakMin=0){let d=mins(end)-mins(start);if(d<=0)d+=1440;return Math.max(0,(d-breakMin)/60)}
@@ -319,6 +328,10 @@ function renderSelectors(){
   const opts=db.employees.map(e=>`<option value="${e.id}">${e.id} - ${e.name}</option>`).join('');
   ['schEmployee','attEmployee','exEmployee','dupEmployee','portfolioEmployee'].forEach(id=>$(id).innerHTML=opts);
   $('payrollEmployeeFocus').innerHTML = `<option value="ALL">ALL STAFFS</option>` + opts;
+  if(db.employees.length){
+    if(!$('portfolioEmployee').value) $('portfolioEmployee').value=db.employees[0].id;
+    if(!$('schEmployee').value) $('schEmployee').value=db.employees[0].id;
+  }
 }
 function leaveUsage(employeeId){
   const sick = db.exceptions.filter(x=>x.employeeId===employeeId && (x.type==='MEDICAL' || x.type==='ABSENT')).length;
@@ -328,11 +341,17 @@ function leaveUsage(employeeId){
 
 function renderPortfolio(){
   const empId=$('portfolioEmployee').value;
-  if(!empId){ $('portfolioSummary').textContent='No data'; return; }
+  if(!empId){ $('portfolioSummary').textContent='No data'; $('portfolioDocsRows').innerHTML=''; return; }
   const emp=db.employees.find(e=>e.id===empId);
-  if(!emp){ $('portfolioSummary').textContent='No data'; return; }
+  if(!emp){ $('portfolioSummary').textContent='No data'; $('portfolioDocsRows').innerHTML=''; return; }
   const u=leaveUsage(empId);
-  $('portfolioSummary').innerHTML = `<b>${emp.name}</b> ｜ Sick Leave: <b>${u.sick}</b> ｜ Annual Leave: <b>${u.annual}</b>`;
+  const docs=db.documents.filter(d=>d.employeeId===empId);
+  const resumeCount=docs.filter(d=>d.type==='RESUME').length;
+  const offerCount=docs.filter(d=>d.type==='OFFER_LETTER').length;
+  const medCount=docs.filter(d=>d.type==='MEDICAL_CERT').length;
+  const memoCount=docs.filter(d=>d.type==='MEMO').length;
+  $('portfolioSummary').innerHTML = `<b>${emp.name}</b> ｜ Sick Leave: <b>${u.sick}</b> ｜ Annual Leave: <b>${u.annual}</b> ｜ Resume: <b>${resumeCount}</b> ｜ Offer Letter: <b>${offerCount}</b> ｜ Medical Cert: <b>${medCount}</b> ｜ Memo: <b>${memoCount}</b>`;
+  $('portfolioDocsRows').innerHTML = docs.map(d=>`<tr><td>${d.type}</td><td>${d.fileName||'-'}</td><td>${d.note||''}</td><td>${d.savedAt}</td><td><button class="secondary" onclick="deleteDoc('${d.id}')">Delete</button></td></tr>`).join('');
 }
 
 function renderEmployees(){
@@ -355,7 +374,13 @@ window.deleteEmployee=function(id){
   db.schedules=db.schedules.filter(s=>s.employeeId!==id);
   db.attendance=db.attendance.filter(a=>a.employeeId!==id);
   db.exceptions=db.exceptions.filter(x=>x.employeeId!==id);
+  db.documents=db.documents.filter(d=>d.employeeId!==id);
   save(); renderEmployees(); renderSelectors(); renderPortfolio(); renderWeekCalendar(); renderAttendance(); renderExceptions(); renderApproval(); runPayroll(); renderCountryRulePanel();
+};
+
+window.deleteDoc=function(id){
+  db.documents=db.documents.filter(d=>d.id!==id);
+  save(); renderPortfolio();
 };
 function renderSchedule(){
   // visual calendar is now the primary schedule surface
@@ -717,6 +742,24 @@ $('savePreset').onclick=()=>{
   $('customRulesRow').classList.add('hidden');
   renderCountryRulePanel();
   alert(`Saved company preset for ${c}`);
+};
+$('saveDoc').onclick=()=>{
+  const employeeId=$('portfolioEmployee').value;
+  if(!employeeId){ alert('Select employee first'); return; }
+  const type=$('docType').value;
+  const note=$('docNote').value.trim();
+  const f=$('docFile').files[0];
+  const done=(fileName,fileData='')=>{
+    db.documents.push({id:uid(),employeeId,type,fileName:fileName||'',fileData,note,savedAt:new Date().toISOString().slice(0,16).replace('T',' ')});
+    save(); $('docNote').value=''; $('docFile').value=''; renderPortfolio();
+  };
+  if(f){
+    const reader=new FileReader();
+    reader.onload=()=>done(f.name, String(reader.result||''));
+    reader.readAsDataURL(f);
+  } else {
+    done('', '');
+  }
 };
 $('payrollEmployeeFocus').onchange=()=>{ renderCountryRulePanel(); runPayroll(); };
 $('prCountry').onchange=()=>{ renderCountryRulePanel(); runPayroll(); };
