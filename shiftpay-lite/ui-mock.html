@@ -66,24 +66,55 @@
   </section>
 
   <section id="schedule" class="panel">
-    <h3>Fast scheduling (templates + copy)</h3>
+    <h3>Scheduling (calendar-first)</h3>
     <div class="row">
       <div class="field"><label>Employee</label><select id="schEmployee"></select></div>
-      <div class="field"><label>Week Start Date</label><input id="tplWeekStart" type="date"></div>
-      <div class="field"><label>Template</label><select id="schTemplate"><option value="MON_FRI">Mon-Fri</option><option value="TUE_SAT">Tue-Sat</option><option value="CUSTOM">Custom Days</option></select></div>
+      <div class="field"><label>Week Start</label><input id="tplWeekStart" type="date"></div>
+      <div class="field"><label>Weekly Template</label><select id="schTemplate"><option value="MON_FRI">Mon-Fri</option><option value="TUE_SAT">Tue-Sat</option><option value="CUSTOM">Custom</option></select></div>
       <div class="field"><label>Shift Time</label><input id="tplTime" value="09:00-18:00"></div>
     </div>
     <div class="row">
       <div class="field"><label>Break Minutes</label><input id="tplBreak" type="number" value="60"></div>
       <div class="field"><label>Shift Type</label><select id="tplType"><option value="normal">Normal</option><option value="holiday">Holiday</option></select></div>
-      <div class="field"><label>Custom days (0-6 comma)</label><input id="tplCustomDays" value="1,2,3,4,5" placeholder="0=Sun"></div>
-      <div class="field"><label>Actions</label><button id="applyTemplate">Apply Template Week</button></div>
+      <div class="field" style="grid-column: span 2;"><label>Custom weekdays</label>
+        <div id="weekdayBtns" style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button type="button" class="ghost day-btn" data-day="0">Sun</button>
+          <button type="button" class="ghost day-btn" data-day="1">Mon</button>
+          <button type="button" class="ghost day-btn" data-day="2">Tue</button>
+          <button type="button" class="ghost day-btn" data-day="3">Wed</button>
+          <button type="button" class="ghost day-btn" data-day="4">Thu</button>
+          <button type="button" class="ghost day-btn" data-day="5">Fri</button>
+          <button type="button" class="ghost day-btn" data-day="6">Sat</button>
+        </div>
+      </div>
     </div>
 
     <div class="row three">
-      <div class="field"><label>Copy source week start</label><input id="copyFromWeek" type="date"></div>
-      <div class="field"><label>Copy target week start</label><input id="copyToWeek" type="date"></div>
-      <div class="field"><label>&nbsp;</label><button class="secondary" id="copyWeek">Copy Week Schedule</button></div>
+      <div class="field"><label>&nbsp;</label><button id="applyTemplate">Apply Template</button></div>
+      <div class="field"><label>&nbsp;</label><button class="secondary" id="copyToNext">Copy this week → next week</button></div>
+      <div class="field"><label>&nbsp;</label><button class="secondary" id="copyFromPrev">Copy from previous week</button></div>
+    </div>
+
+    <div class="row two">
+      <div class="field"><label>Duplicate this week to employee</label><select id="dupEmployee"></select></div>
+      <div class="field"><label>&nbsp;</label><button class="secondary" id="dupToEmployee">Duplicate to employee</button></div>
+    </div>
+
+    <h4 style="margin:12px 0 6px;">Weekly calendar</h4>
+    <table><thead><tr><th>Day</th><th>Date</th><th>Current Shift</th><th>Edit</th></tr></thead><tbody id="weekCalendarRows"></tbody></table>
+
+    <div class="card" style="margin-top:10px; background:#111833;">
+      <h4 style="margin:0 0 8px;">Edit selected day</h4>
+      <div class="row">
+        <div class="field"><label>Selected date</label><input id="editDate" readonly></div>
+        <div class="field"><label>Start</label><input id="editStart" value="09:00"></div>
+        <div class="field"><label>End</label><input id="editEnd" value="18:00"></div>
+        <div class="field"><label>Break</label><input id="editBreak" type="number" value="60"></div>
+      </div>
+      <div class="row two">
+        <div class="field"><label>Type</label><select id="editType"><option value="normal">Normal</option><option value="holiday">Holiday</option></select></div>
+        <div class="field"><label>&nbsp;</label><button id="saveDayEdit">OK (Save Day)</button></div>
+      </div>
     </div>
 
     <table><thead><tr><th>Employee</th><th>Date</th><th>Shift</th><th>Break</th><th>Type</th></tr></thead><tbody id="scheduleRows"></tbody></table>
@@ -184,10 +215,22 @@ function weekDates(startISO,days){
   const d=new Date(startISO+'T00:00:00');
   return days.map(x=>{const t=new Date(d); t.setDate(d.getDate()+x); return t.toISOString().slice(0,10);});
 }
+function allWeekDates(startISO){ return weekDates(startISO,[0,1,2,3,4,5,6]); }
+function dayName(idx){ return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][idx] || ''; }
+function parseWeekStart(v){
+  if(v) return v;
+  const now=new Date();
+  const day=now.getDay();
+  const sunday=new Date(now); sunday.setDate(now.getDate()-day);
+  return sunday.toISOString().slice(0,10);
+}
+function selectedCustomDays(){
+  return [...document.querySelectorAll('.day-btn.active')].map(b=>Number(b.dataset.day));
+}
 
 function renderSelectors(){
   const opts=db.employees.map(e=>`<option value="${e.id}">${e.id} - ${e.name}</option>`).join('');
-  ['schEmployee','attEmployee','exEmployee'].forEach(id=>$(id).innerHTML=opts);
+  ['schEmployee','attEmployee','exEmployee','dupEmployee'].forEach(id=>$(id).innerHTML=opts);
 }
 function renderEmployees(){
   $('employeesRows').innerHTML=db.employees.map(e=>`<tr><td>${e.id}</td><td>${e.name}</td><td>${e.department}</td><td>${e.role}</td><td>${e.payType}</td><td>${e.country}</td></tr>`).join('');
@@ -196,6 +239,28 @@ function renderSchedule(){
   $('scheduleRows').innerHTML=db.schedules.sort((a,b)=>(a.date+a.employeeId).localeCompare(b.date+b.employeeId))
     .map(s=>`<tr><td>${s.employeeId}</td><td>${s.date}</td><td>${s.start}-${s.end}</td><td>${s.breakMin}</td><td>${s.type}</td></tr>`).join('');
 }
+
+function renderWeekCalendar(){
+  const empId=$('schEmployee').value;
+  const weekStart=parseWeekStart($('tplWeekStart').value);
+  $('tplWeekStart').value=weekStart;
+  const dates=allWeekDates(weekStart);
+  $('weekCalendarRows').innerHTML = dates.map((d,idx)=>{
+    const s=findSchedule(empId,d);
+    const text=s?`${s.start}-${s.end} / break ${s.breakMin} / ${s.type}`:'(off)';
+    return `<tr><td>${dayName(idx)}</td><td>${d}</td><td>${text}</td><td><button class="ghost" onclick="editDay('${d}')">Edit</button></td></tr>`;
+  }).join('');
+}
+
+window.editDay=function(date){
+  const empId=$('schEmployee').value;
+  const s=findSchedule(empId,date);
+  $('editDate').value=date;
+  $('editStart').value=s?s.start:'09:00';
+  $('editEnd').value=s?s.end:'18:00';
+  $('editBreak').value=s?s.breakMin:60;
+  $('editType').value=s?s.type:'normal';
+};
 
 function findSchedule(empId,date){ return db.schedules.find(s=>s.employeeId===empId && s.date===date); }
 function findException(empId,date){ return db.exceptions.find(x=>x.employeeId===empId && x.date===date); }
@@ -269,33 +334,85 @@ $('addEmployee').onclick=()=>{
 };
 
 $('applyTemplate').onclick=()=>{
-  const empId=$('schEmployee').value, start=$('tplWeekStart').value, type=$('schTemplate').value;
-  if(!empId||!start){alert('Employee and week start required');return;}
+  const empId=$('schEmployee').value, start=parseWeekStart($('tplWeekStart').value), type=$('schTemplate').value;
+  if(!empId){alert('Employee required');return;}
+  $('tplWeekStart').value=start;
   const [st,en]=$('tplTime').value.split('-').map(x=>x.trim());
   let days=[];
-  if(type==='MON_FRI') days=[0,1,2,3,4];
-  else if(type==='TUE_SAT') days=[1,2,3,4,5];
-  else days=$('tplCustomDays').value.split(',').map(x=>Number(x.trim())).filter(n=>!Number.isNaN(n)&&n>=0&&n<=6);
+  if(type==='MON_FRI') days=[1,2,3,4,5];
+  else if(type==='TUE_SAT') days=[2,3,4,5,6];
+  else days=selectedCustomDays();
+  if(!days.length){alert('Select weekdays for custom template');return;}
+
   weekDates(start,days).forEach(date=>{
-    db.schedules.push({id:uid(),employeeId:empId,date,start:st,end:en,breakMin:Number($('tplBreak').value||0),type:$('tplType').value});
+    const existed=findSchedule(empId,date);
+    if(existed){ existed.start=st; existed.end=en; existed.breakMin=Number($('tplBreak').value||0); existed.type=$('tplType').value; }
+    else db.schedules.push({id:uid(),employeeId:empId,date,start:st,end:en,breakMin:Number($('tplBreak').value||0),type:$('tplType').value});
   });
-  save(); renderSchedule();
+  save(); renderSchedule(); renderWeekCalendar();
 };
 
-$('copyWeek').onclick=()=>{
-  const empId=$('schEmployee').value, from=$('copyFromWeek').value, to=$('copyToWeek').value;
-  if(!empId||!from||!to){alert('Employee and copy week dates are required');return;}
+$('copyToNext').onclick=()=>{
+  const empId=$('schEmployee').value, from=parseWeekStart($('tplWeekStart').value);
+  if(!empId){alert('Employee required');return;}
   const fromBase=new Date(from+'T00:00:00').getTime();
-  const toBase=new Date(to+'T00:00:00').getTime();
+  const toBase=fromBase+7*24*3600*1000;
   db.schedules.filter(s=>s.employeeId===empId).forEach(s=>{
     const d=new Date(s.date+'T00:00:00').getTime();
     const diff=(d-fromBase)/(24*3600*1000);
     if(diff>=0 && diff<=6){
       const nd=new Date(toBase+diff*24*3600*1000).toISOString().slice(0,10);
-      db.schedules.push({...s,id:uid(),date:nd});
+      const existed=findSchedule(empId,nd);
+      if(existed){ existed.start=s.start; existed.end=s.end; existed.breakMin=s.breakMin; existed.type=s.type; }
+      else db.schedules.push({...s,id:uid(),date:nd});
     }
   });
-  save(); renderSchedule();
+  save(); renderSchedule(); renderWeekCalendar();
+};
+
+$('copyFromPrev').onclick=()=>{
+  const empId=$('schEmployee').value, to=parseWeekStart($('tplWeekStart').value);
+  if(!empId){alert('Employee required');return;}
+  const toBase=new Date(to+'T00:00:00').getTime();
+  const fromBase=toBase-7*24*3600*1000;
+  db.schedules.filter(s=>s.employeeId===empId).forEach(s=>{
+    const d=new Date(s.date+'T00:00:00').getTime();
+    const diff=(d-fromBase)/(24*3600*1000);
+    if(diff>=0 && diff<=6){
+      const nd=new Date(toBase+diff*24*3600*1000).toISOString().slice(0,10);
+      const existed=findSchedule(empId,nd);
+      if(existed){ existed.start=s.start; existed.end=s.end; existed.breakMin=s.breakMin; existed.type=s.type; }
+      else db.schedules.push({...s,id:uid(),date:nd});
+    }
+  });
+  save(); renderSchedule(); renderWeekCalendar();
+};
+
+$('dupToEmployee').onclick=()=>{
+  const fromEmp=$('schEmployee').value, toEmp=$('dupEmployee').value, week=parseWeekStart($('tplWeekStart').value);
+  if(!fromEmp||!toEmp){alert('Select source and target employee');return;}
+  const base=new Date(week+'T00:00:00').getTime();
+  db.schedules.filter(s=>s.employeeId===fromEmp).forEach(s=>{
+    const d=new Date(s.date+'T00:00:00').getTime();
+    const diff=(d-base)/(24*3600*1000);
+    if(diff>=0 && diff<=6){
+      const nd=new Date(base+diff*24*3600*1000).toISOString().slice(0,10);
+      const existed=findSchedule(toEmp,nd);
+      if(existed){ existed.start=s.start; existed.end=s.end; existed.breakMin=s.breakMin; existed.type=s.type; }
+      else db.schedules.push({...s,id:uid(),employeeId:toEmp,date:nd});
+    }
+  });
+  save(); renderSchedule(); renderWeekCalendar();
+};
+
+$('saveDayEdit').onclick=()=>{
+  const empId=$('schEmployee').value, date=$('editDate').value;
+  if(!empId||!date){alert('Select a day from weekly calendar first');return;}
+  const existed=findSchedule(empId,date);
+  const payload={start:$('editStart').value,end:$('editEnd').value,breakMin:Number($('editBreak').value||0),type:$('editType').value};
+  if(existed){ Object.assign(existed,payload); }
+  else db.schedules.push({id:uid(),employeeId:empId,date,...payload});
+  save(); renderSchedule(); renderWeekCalendar();
 };
 
 $('saveAttendance').onclick=()=>{
@@ -314,13 +431,20 @@ $('addException').onclick=()=>{
 $('runPayroll').onclick=runPayroll;
 $('exportPayroll').onclick=exportPayroll;
 
+[...document.querySelectorAll('.day-btn')].forEach(btn=>{
+  if(['1','2','3','4','5'].includes(btn.dataset.day)) btn.classList.add('active');
+  btn.onclick=()=>btn.classList.toggle('active');
+});
+$('schEmployee').onchange=renderWeekCalendar;
+$('tplWeekStart').onchange=renderWeekCalendar;
+
 [...document.querySelectorAll('.tab')].forEach(t=>t.onclick=()=>{
   [...document.querySelectorAll('.tab')].forEach(x=>x.classList.remove('active'));
   [...document.querySelectorAll('.panel')].forEach(x=>x.classList.remove('active'));
   t.classList.add('active'); $(t.dataset.tab).classList.add('active');
 });
 
-renderEmployees(); renderSelectors(); renderSchedule(); renderAttendance(); renderExceptions(); renderApproval(); runPayroll();
+renderEmployees(); renderSelectors(); renderSchedule(); renderAttendance(); renderExceptions(); renderApproval(); renderWeekCalendar(); runPayroll();
 </script>
 </body>
 </html>
