@@ -109,31 +109,41 @@ returns text language sql stable as $$
 $$;
 
 -- profiles
-create policy if not exists "profiles_self_read" on public.profiles for select using (id = auth.uid());
-create policy if not exists "profiles_hr_admin_all" on public.profiles for all using (public.current_role() in ('admin','hr')) with check (public.current_role() in ('admin','hr'));
+drop policy if exists "profiles_self_read" on public.profiles;
+create policy "profiles_self_read" on public.profiles for select using (id = auth.uid());
+drop policy if exists "profiles_hr_admin_all" on public.profiles;
+create policy "profiles_hr_admin_all" on public.profiles for all using (public.current_role() in ('admin','hr')) with check (public.current_role() in ('admin','hr'));
 
 -- employees
-create policy if not exists "employees_hr_admin_all" on public.employees for all using (public.current_role() in ('admin','hr')) with check (public.current_role() in ('admin','hr'));
+drop policy if exists "employees_hr_admin_all" on public.employees;
+create policy "employees_hr_admin_all" on public.employees for all using (public.current_role() in ('admin','hr')) with check (public.current_role() in ('admin','hr'));
 
 -- schedules
-create policy if not exists "schedules_hr_admin_all" on public.schedules for all using (public.current_role() in ('admin','hr')) with check (public.current_role() in ('admin','hr'));
+drop policy if exists "schedules_hr_admin_all" on public.schedules;
+create policy "schedules_hr_admin_all" on public.schedules for all using (public.current_role() in ('admin','hr')) with check (public.current_role() in ('admin','hr'));
 
 -- attendance
-create policy if not exists "attendance_hr_admin_all" on public.attendance for all using (public.current_role() in ('admin','hr')) with check (public.current_role() in ('admin','hr'));
-create policy if not exists "attendance_employee_own" on public.attendance for all using (
+drop policy if exists "attendance_hr_admin_all" on public.attendance;
+create policy "attendance_hr_admin_all" on public.attendance for all using (public.current_role() in ('admin','hr')) with check (public.current_role() in ('admin','hr'));
+drop policy if exists "attendance_employee_own" on public.attendance;
+create policy "attendance_employee_own" on public.attendance for all using (
   exists (select 1 from public.employees e where e.id = attendance.employee_id and e.employee_code = (select coalesce((auth.jwt() ->> 'employee_code'),'') ))
 ) with check (
   exists (select 1 from public.employees e where e.id = attendance.employee_id and e.employee_code = (select coalesce((auth.jwt() ->> 'employee_code'),'') ))
 );
 
 -- exceptions
-create policy if not exists "exceptions_hr_admin_all" on public.exceptions for all using (public.current_role() in ('admin','hr')) with check (public.current_role() in ('admin','hr'));
-create policy if not exists "exceptions_employee_own" on public.exceptions for all using (
+drop policy if exists "exceptions_hr_admin_all" on public.exceptions;
+create policy "exceptions_hr_admin_all" on public.exceptions for all using (public.current_role() in ('admin','hr')) with check (public.current_role() in ('admin','hr'));
+drop policy if exists "exceptions_employee_own" on public.exceptions;
+create policy "exceptions_employee_own" on public.exceptions for all using (
   exists (select 1 from public.employees e where e.id = exceptions.employee_id and e.employee_code = (select coalesce((auth.jwt() ->> 'employee_code'),'') ))
 ) with check (
   exists (select 1 from public.employees e where e.id = exceptions.employee_id and e.employee_code = (select coalesce((auth.jwt() ->> 'employee_code'),'') ))
 );
 
 -- payroll tables
-create policy if not exists "payroll_hr_admin_all_runs" on public.payroll_runs for all using (public.current_role() in ('admin','hr')) with check (public.current_role() in ('admin','hr'));
-create policy if not exists "payroll_hr_admin_all_items" on public.payroll_items for all using (public.current_role() in ('admin','hr')) with check (public.current_role() in ('admin','hr'));
+drop policy if exists "payroll_hr_admin_all_runs" on public.payroll_runs;
+create policy "payroll_hr_admin_all_runs" on public.payroll_runs for all using (public.current_role() in ('admin','hr')) with check (public.current_role() in ('admin','hr'));
+drop policy if exists "payroll_hr_admin_all_items" on public.payroll_items;
+create policy "payroll_hr_admin_all_items" on public.payroll_items for all using (public.current_role() in ('admin','hr')) with check (public.current_role() in ('admin','hr'));
