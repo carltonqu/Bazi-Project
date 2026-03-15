@@ -120,8 +120,13 @@
       </div>
     </details>
 
-    <h4 style="margin:12px 0 6px;">Weekly calendar blocks</h4>
-    <div id="weekCalendarGrid" style="display:grid;grid-template-columns:repeat(7,minmax(130px,1fr));gap:8px;"></div>
+    <h4 style="margin:12px 0 6px;">Weekly timeline calendar</h4>
+    <div style="overflow:auto;">
+      <table id="weekTimelineTable">
+        <thead id="weekTimelineHead"></thead>
+        <tbody id="weekTimelineBody"></tbody>
+      </table>
+    </div>
 
     <h4 style="margin:12px 0 6px;">Weekly roster summary</h4>
     <table>
@@ -313,13 +318,23 @@ function renderWeekCalendar(){
   const weekStart=parseWeekStart($('tplWeekStart').value);
   $('tplWeekStart').value=weekStart;
   const dates=allWeekDates(weekStart);
-  $('weekCalendarGrid').innerHTML = dates.map((d,idx)=>{
+
+  const hours=[...Array(24)].map((_,h)=>h);
+  $('weekTimelineHead').innerHTML=`<tr><th style="min-width:130px">Day / Date</th>${hours.map(h=>`<th>${h}:00</th>`).join('')}</tr>`;
+
+  $('weekTimelineBody').innerHTML=dates.map((d,idx)=>{
     const s=findSchedule(empId,d);
-    const block=s
-      ? `<button class="ghost" style="margin-top:6px;background:#243562;width:100%;text-align:left" onclick="editDay('${d}')">[${s.start}–${s.end}]<br><span class='small'>${s.type}, break ${s.breakMin}</span></button>`
-      : `<button class="ghost" style="margin-top:6px;width:100%;text-align:left" onclick="editDay('${d}')">+ Add shift</button>`;
-    return `<div class='card' style='padding:10px'><div><b>${dayName(idx)}</b></div><div class='small'>${d}</div>${block}</div>`;
+    const start=s?Number(s.start.split(':')[0]):null;
+    const endRaw=s?Number(s.end.split(':')[0]):null;
+    const end=s?(endRaw<=start?endRaw+24:endRaw):null;
+    const cells=hours.map(h=>{
+      const inShift=s && h>=start && h<end;
+      const label=(s && h===start)?`[${s.start}-${s.end}]`:'';
+      return `<td onclick="editDay('${d}')" style="cursor:pointer;background:${inShift?'#243562':'transparent'}">${label}</td>`;
+    }).join('');
+    return `<tr><td><b>${dayName(idx)}</b><br><span class='small'>${d}</span></td>${cells}</tr>`;
   }).join('');
+
   renderWeekSummary();
 }
 
