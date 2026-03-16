@@ -33,23 +33,12 @@
     .ok{color:#78e08f}.warn{color:#ffd166}.bad{color:#ff7b7b}
     .chip{display:inline-block;padding:2px 8px;border-radius:999px;background:#25335b;font-size:11px}
     .hidden{display:none !important}
-    .lang-gate{position:fixed;inset:0;background:rgba(5,10,20,.92);display:flex;align-items:center;justify-content:center;z-index:9999}
-    .lang-box{background:#151c33;border:1px solid #283253;border-radius:14px;padding:20px;max-width:420px;width:92%}
-    .lang-actions{display:flex;gap:10px;margin-top:12px}
+
     @media (max-width: 1000px){.row{grid-template-columns:repeat(2,1fr)}.kpi{grid-template-columns:repeat(2,1fr)}}
   </style>
 </head>
 <body>
-<div id="langGate" class="lang-gate">
-  <div class="lang-box">
-    <h3 style="margin:0 0 8px;">Choose language / 选择语言</h3>
-    <div class="small">Please choose your preferred language before entering ClockRoster.</div>
-    <div class="lang-actions">
-      <button id="chooseEN">English</button>
-      <button class="secondary" id="chooseZH">中文</button>
-    </div>
-  </div>
-</div>
+
 <div class="wrap">
   <h1 id="pageTitle">ClockRoster · Usable HR Workflow</h1>
   <div id="pageSubtitle" class="small">End-to-end: Employee setup → Fast schedule templates → Employee clocking → Variance & exception → OT approval → Payroll export</div>
@@ -813,12 +802,8 @@ function applyLanguage(lang){
   $('tabPayroll').textContent = zh ? '6) 薪资' : '6) Payroll';
 }
 
-$('chooseEN').onclick=()=>{ localStorage.setItem('clockroster_lang','en'); applyLanguage('en'); $('langGate').classList.add('hidden'); };
-$('chooseZH').onclick=()=>{ localStorage.setItem('clockroster_lang','zh'); applyLanguage('zh'); $('langGate').classList.add('hidden'); };
-
 renderEmployees(); renderSelectors(); renderPortfolio(); renderSchedule(); renderAttendance(); renderExceptions(); renderApproval(); renderWeekCalendar(); runPayroll(); resetEmployeeForm(); syncTemplateUI(); renderCountryRulePanel();
-const savedLang = localStorage.getItem('clockroster_lang');
-if(savedLang){ applyLanguage(savedLang); $('langGate').classList.add('hidden'); }
+applyLanguage('en');
 </script>
 </body>
 </html>
