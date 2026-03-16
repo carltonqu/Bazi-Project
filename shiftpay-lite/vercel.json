@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "name": "clockroster",
+  "builds": [
+    { "src": "ui-mock.html", "use": "@vercel/static" },
+    { "src": "employee-app.html", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/", "dest": "/ui-mock.html" },
+    { "src": "/employee", "dest": "/employee-app.html" },
+    { "src": "/(.*)", "dest": "/$1" }
+  ]
+}
