@@ -22,3 +22,4 @@ prisma/dev.db-journal
 .DS_Store
 *.pem
 npm-debug.log*
+.env*.local
