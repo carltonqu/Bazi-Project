@@ -24,6 +24,9 @@ model User {
   accounts      Account[]
   sessions      Session[]
   subscription  Subscription?
+  employees     Employee[]
+  shifts        Shift[]
+  paySettings   PaySettings?
 }
 
 model Account {
@@ -72,6 +75,55 @@ model Subscription {
   stripeCurrentPeriodEnd DateTime?
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Employee {
+  id         String   @id @default(cuid())
+  userId     String
+  name       String
+  email      String?
+  phone      String?
+  role       String   @default("Staff")
+  hourlyRate Float    @default(0)
+  status     String   @default("ACTIVE")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shifts Shift[]
+}
+
+model Shift {
+  id           String   @id @default(cuid())
+  userId       String
+  employeeId   String
+  startTime    DateTime
+  endTime      DateTime
+  breakMinutes Int      @default(0)
+  isHoliday    Boolean  @default(false)
+  note         String?
+  status       String   @default("SCHEDULED")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+model PaySettings {
+  id                     String   @id @default(cuid())
+  userId                 String   @unique
+  overtimeThresholdHours Float    @default(40)
+  overtimeMultiplier     Float    @default(1.5)
+  nightStartHour         Int      @default(22)
+  nightEndHour           Int      @default(6)
+  nightMultiplier        Float    @default(1.2)
+  holidayMultiplier      Float    @default(2.0)
+  currency               String   @default("USD")
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

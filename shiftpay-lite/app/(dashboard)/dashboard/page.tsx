@@ -3,13 +3,6 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-const stats = [
-  { label: "Total Employees", value: "—", icon: "👥", change: "" },
-  { label: "Shifts This Week", value: "—", icon: "📅", change: "" },
-  { label: "Hours Tracked", value: "—", icon: "🕐", change: "" },
-  { label: "Next Payroll", value: "—", icon: "💰", change: "" },
-];
-
 const quickActions = [
   { label: "Add Employee", href: "/dashboard/employees/new", icon: "👤", color: "bg-blue-50 text-blue-700" },
   { label: "Create Schedule", href: "/dashboard/schedule/new", icon: "📅", color: "bg-green-50 text-green-700" },
@@ -27,6 +20,45 @@ export default async function DashboardPage() {
   });
 
   if (!user) redirect("/login");
+
+  const now = new Date();
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate() - (now.getDay() === 0 ? 6 : now.getDay() - 1));
+  weekStart.setHours(0, 0, 0, 0);
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 6);
+  weekEnd.setHours(23, 59, 59, 999);
+
+  const [employeeCount, weekShifts] = await Promise.all([
+    prisma.employee.count({ where: { userId: session.user.id, status: "ACTIVE" } }),
+    prisma.shift.findMany({
+      where: { userId: session.user.id, startTime: { gte: weekStart, lte: weekEnd } },
+    }),
+  ]);
+
+  const hoursTracked = weekShifts.reduce((sum, s) => {
+    const ms =
+      new Date(s.endTime).getTime() -
+      new Date(s.startTime).getTime() -
+      s.breakMinutes * 60000;
+    return sum + ms / 3600000;
+  }, 0);
+
+  const nextFriday = new Date(now);
+  const daysTilFriday = (5 - now.getDay() + 7) % 7 || 7;
+  nextFriday.setDate(now.getDate() + daysTilFriday);
+
+  const stats = [
+    { label: "Total Employees", value: String(employeeCount), icon: "👥", change: "" },
+    { label: "Shifts This Week", value: String(weekShifts.length), icon: "📅", change: "" },
+    { label: "Hours Tracked", value: hoursTracked.toFixed(1) + "h", icon: "🕐", change: "" },
+    {
+      label: "Next Payroll",
+      value: nextFriday.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      icon: "💰",
+      change: "",
+    },
+  ];
 
   const firstName = user.name?.split(" ")[0] ?? "there";
   const plan = user.subscription?.plan ?? "FREE";
