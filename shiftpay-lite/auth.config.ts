@@ -29,5 +29,4 @@ export const authConfig = {
     },
   },
   providers: [],
-  session: { strategy: "database" },
 } satisfies NextAuthConfig;
