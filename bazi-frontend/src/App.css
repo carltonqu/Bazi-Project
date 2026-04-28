@@ -1476,3 +1476,275 @@ body {
     font-size: 80px;
   }
 }
+
+/* ========================================
+   WHY BAZI SECTION
+   ======================================== */
+
+.why-bazi-section {
+  padding: 120px 0;
+  background: white;
+}
+
+.benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 32px;
+}
+
+.benefit-card {
+  padding: 40px 32px;
+  background: linear-gradient(135deg, #fafafa, white);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  transition: all var(--transition-base);
+  animation: fadeInUp 0.6s ease-out both;
+}
+
+.benefit-card:nth-child(1) { animation-delay: 0.1s; }
+.benefit-card:nth-child(2) { animation-delay: 0.15s; }
+.benefit-card:nth-child(3) { animation-delay: 0.2s; }
+.benefit-card:nth-child(4) { animation-delay: 0.25s; }
+.benefit-card:nth-child(5) { animation-delay: 0.3s; }
+.benefit-card:nth-child(6) { animation-delay: 0.35s; }
+
+.benefit-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
+  border-color: rgba(230, 57, 70, 0.2);
+}
+
+.benefit-icon {
+  font-size: 48px;
+  margin-bottom: 20px;
+  transition: transform var(--transition-fast);
+}
+
+.benefit-card:hover .benefit-icon {
+  transform: scale(1.2) rotate(5deg);
+}
+
+.benefit-card h3 {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--light-text);
+}
+
+.benefit-card p {
+  font-size: 15px;
+  color: #666;
+  line-height: 1.7;
+}
+
+/* ========================================
+   TESTIMONIALS SECTION
+   ======================================== */
+
+.testimonials-section {
+  padding: 120px 0;
+  background: linear-gradient(135deg, var(--light-bg), #f0f0f0);
+}
+
+.testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 32px;
+}
+
+.testimonial-card {
+  padding: 40px;
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  transition: all var(--transition-base);
+  animation: fadeInUp 0.6s ease-out both;
+}
+
+.testimonial-card:nth-child(1) { animation-delay: 0.1s; }
+.testimonial-card:nth-child(2) { animation-delay: 0.2s; }
+.testimonial-card:nth-child(3) { animation-delay: 0.3s; }
+
+.testimonial-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+}
+
+.testimonial-stars {
+  color: #FFD700;
+  font-size: 20px;
+  margin-bottom: 20px;
+  letter-spacing: 2px;
+}
+
+.testimonial-text {
+  font-size: 16px;
+  line-height: 1.8;
+  color: #444;
+  margin-bottom: 24px;
+  font-style: italic;
+}
+
+.testimonial-author {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.testimonial-author strong {
+  font-size: 16px;
+  color: var(--light-text);
+}
+
+.testimonial-author span {
+  font-size: 14px;
+  color: #888;
+}
+
+/* ========================================
+   FAQ SECTION
+   ======================================== */
+
+.faq-section {
+  padding: 120px 0;
+  background: white;
+}
+
+.faq-list {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.faq-item {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  animation: fadeInUp 0.5s ease-out both;
+}
+
+.faq-item:nth-child(1) { animation-delay: 0.05s; }
+.faq-item:nth-child(2) { animation-delay: 0.1s; }
+.faq-item:nth-child(3) { animation-delay: 0.15s; }
+.faq-item:nth-child(4) { animation-delay: 0.2s; }
+.faq-item:nth-child(5) { animation-delay: 0.25s; }
+.faq-item:nth-child(6) { animation-delay: 0.3s; }
+
+.faq-question {
+  width: 100%;
+  padding: 24px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: none;
+  border: none;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--light-text);
+  cursor: pointer;
+  text-align: left;
+  transition: color var(--transition-fast);
+}
+
+.faq-question:hover {
+  color: var(--china-red);
+}
+
+.faq-icon {
+  transition: transform var(--transition-fast);
+  flex-shrink: 0;
+  margin-left: 16px;
+}
+
+.faq-item.open .faq-icon {
+  transform: rotate(180deg);
+}
+
+.faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height var(--transition-base), padding var(--transition-base);
+}
+
+.faq-item.open .faq-answer {
+  max-height: 300px;
+  padding-bottom: 24px;
+}
+
+.faq-answer p {
+  font-size: 15px;
+  line-height: 1.8;
+  color: #666;
+}
+
+/* ========================================
+   CTA BANNER SECTION
+   ======================================== */
+
+.cta-banner-section {
+  padding: 100px 0;
+  background: linear-gradient(135deg, var(--china-red), #c41e3a);
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-banner-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.05;
+}
+
+.cta-content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  color: white;
+}
+
+.cta-content h2 {
+  font-family: var(--font-display);
+  font-size: clamp(32px, 5vw, 48px);
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.cta-content p {
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 32px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.cta-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 40px;
+  background: white;
+  color: var(--china-red);
+  font-size: 16px;
+  font-weight: 700;
+  text-decoration: none;
+  border-radius: var(--radius-full);
+  transition: all var(--transition-fast);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.cta-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+
+.cta-button svg {
+  transition: transform var(--transition-fast);
+}
+
+.cta-button:hover svg {
+  transform: translateX(4px);
+}

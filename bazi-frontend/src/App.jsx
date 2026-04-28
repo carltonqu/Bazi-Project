@@ -507,6 +507,216 @@ function AboutSection() {
   );
 }
 
+// Why Bazi Section
+function WhyBaziSection() {
+  const benefits = [
+    {
+      icon: "🎯",
+      title: "Discover Your Life Purpose",
+      description: "Understand your innate talents, strengths, and the unique path you were born to follow."
+    },
+    {
+      icon: "💼",
+      title: "Career & Wealth Guidance",
+      description: "Identify the most prosperous career paths and optimal timing for financial decisions."
+    },
+    {
+      icon: "❤️",
+      title: "Relationship Compatibility",
+      description: "Find your ideal partner and understand relationship dynamics for lasting harmony."
+    },
+    {
+      icon: "⏰",
+      title: "Timing is Everything",
+      description: "Know the best times to make important life decisions, start businesses, or find love."
+    },
+    {
+      icon: "⚡",
+      title: "Navigate Challenges",
+      description: "Anticipate obstacles before they arise and prepare strategies to overcome them."
+    },
+    {
+      icon: "🌟",
+      title: "Unlock Your Potential",
+      description: "Maximize your opportunities by aligning your actions with your cosmic blueprint."
+    }
+  ];
+
+  return (
+    <section className="why-bazi-section" id="why-bazi">
+      <div className="container">
+        <div className="section-header">
+          <span className="section-badge">Why Bazi</span>
+          <h2 className="section-title">Unlock Your Life&apos;s Blueprint</h2>
+          <p className="section-subtitle">
+            Discover how ancient Chinese wisdom can transform your modern life
+          </p>
+        </div>
+        <div className="benefits-grid">
+          {benefits.map((benefit, index) => (
+            <div className="benefit-card" key={index}>
+              <div className="benefit-icon">{benefit.icon}</div>
+              <h3>{benefit.title}</h3>
+              <p>{benefit.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Testimonials Section
+function TestimonialsSection() {
+  const testimonials = [
+    {
+      name: "Sarah Chen",
+      location: "Singapore",
+      text: "The Bazi reading was incredibly accurate. It helped me understand why I kept facing the same career challenges and guided me toward a path that truly fits my nature.",
+      rating: 5
+    },
+    {
+      name: "Michael Wong",
+      location: "Hong Kong",
+      text: "I was skeptical at first, but the insights about my relationship patterns were spot on. The advice helped me find my soulmate and build a harmonious marriage.",
+      rating: 5
+    },
+    {
+      name: "Emily Liu",
+      location: "Taipei",
+      text: "The timing predictions were amazing. Following the guidance on when to start my business led to immediate success. I wish I had discovered Bazi years ago!",
+      rating: 5
+    }
+  ];
+
+  return (
+    <section className="testimonials-section" id="testimonials">
+      <div className="container">
+        <div className="section-header">
+          <span className="section-badge">Testimonials</span>
+          <h2 className="section-title">What Our Clients Say</h2>
+          <p className="section-subtitle">
+            Real stories from people whose lives have been transformed
+          </p>
+        </div>
+        <div className="testimonials-grid">
+          {testimonials.map((testimonial, index) => (
+            <div className="testimonial-card" key={index}>
+              <div className="testimonial-stars">
+                {"★".repeat(testimonial.rating)}
+              </div>
+              <p className="testimonial-text">&ldquo;{testimonial.text}&rdquo;</p>
+              <div className="testimonial-author">
+                <strong>{testimonial.name}</strong>
+                <span>{testimonial.location}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// FAQ Section
+function FAQSection() {
+  const [openIndex, setOpenIndex] = useState(null);
+
+  const faqs = [
+    {
+      question: "What is Bazi (八字) and how does it work?",
+      answer: "Bazi, also known as Four Pillars of Destiny, is an ancient Chinese metaphysical system that analyzes your birth date and time to reveal insights about your personality, strengths, challenges, and life path. It uses the Five Elements (Wood, Fire, Earth, Metal, Water) and Yin-Yang theory to interpret your cosmic blueprint."
+    },
+    {
+      question: "How accurate is a Bazi reading?",
+      answer: "Bazi has been practiced for over 5,000 years and is highly regarded for its accuracy in revealing personality traits, life patterns, and optimal timing. While it doesn't predict exact events, it provides valuable guidance about tendencies and opportunities based on your unique energy composition."
+    },
+    {
+      question: "What information do I need to provide?",
+      answer: "To generate your Bazi chart, we need your full name, birth date (year, month, day), exact birth time, and birth location. The more accurate your birth time, the more precise your reading will be."
+    },
+    {
+      question: "Can Bazi help with career decisions?",
+      answer: "Absolutely! Bazi can identify your natural talents, suitable career paths, and optimal timing for career changes or business ventures. It reveals which industries and roles align best with your elemental composition."
+    },
+    {
+      question: "Is my personal information kept private?",
+      answer: "Yes, we take your privacy seriously. Your birth details and personal information are encrypted and used solely for generating your Bazi reading. We never share your data with third parties."
+    },
+    {
+      question: "How often should I get a Bazi reading?",
+      answer: "Your Bazi chart is based on your birth data and remains constant throughout your life. However, we recommend checking your luck cycles annually, as different years bring different energies and opportunities that interact with your chart."
+    }
+  ];
+
+  return (
+    <section className="faq-section" id="faq">
+      <div className="container">
+        <div className="section-header">
+          <span className="section-badge">FAQ</span>
+          <h2 className="section-title">Frequently Asked Questions</h2>
+          <p className="section-subtitle">
+            Everything you need to know about Bazi readings
+          </p>
+        </div>
+        <div className="faq-list">
+          {faqs.map((faq, index) => (
+            <div 
+              className={`faq-item ${openIndex === index ? "open" : ""}`} 
+              key={index}
+            >
+              <button 
+                className="faq-question"
+                onClick={() => setOpenIndex(openIndex === index ? null : index)}
+              >
+                <span>{faq.question}</span>
+                <svg 
+                  className="faq-icon" 
+                  width="20" 
+                  height="20" 
+                  viewBox="0 0 20 20" 
+                  fill="none"
+                >
+                  <path 
+                    d="M5 7.5L10 12.5L15 7.5" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+              <div className="faq-answer">
+                <p>{faq.answer}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// CTA Banner Section
+function CTABannerSection() {
+  return (
+    <section className="cta-banner-section">
+      <div className="container">
+        <div className="cta-content">
+          <h2>Ready to Discover Your Destiny?</h2>
+          <p>Join thousands of seekers who have unlocked their life&apos;s blueprint with our AI-powered Bazi readings.</p>
+          <a href="#features" className="cta-button">
+            Get Your Free Reading
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M4 10H16M16 10L11 5M16 10L11 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // Footer
 function Footer() {
   return (
@@ -540,7 +750,10 @@ export default function App() {
       <HeroSection />
       <FortuneFormSection />
       <FortuneResultsSection />
-      <ComingSoonSection />
+      <WhyBaziSection />
+      <TestimonialsSection />
+      <FAQSection />
+      <CTABannerSection />
       <AboutSection />
       <Footer />
     </div>
