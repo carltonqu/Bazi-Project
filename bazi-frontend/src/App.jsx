@@ -303,60 +303,236 @@ function FortuneFormSection() {
 
 // Fortune Results Section
 function FortuneResultsSection() {
-  const [activeTab, setActiveTab] = useState("relationship");
+  const [activeIndex, setActiveIndex] = useState(0);
 
-  const fortuneData = {
-    relationship: {
+  const fortuneData = [
+    {
+      key: "relationship",
       title: "Relationship",
       icon: "❤️",
-      reading: "Your Bazi chart indicates strong water elements, suggesting deep emotional connections. You are most compatible with those born in the Year of the Dragon or Monkey. Your ideal partner should have strong earth elements to balance your water nature.",
-      advice: "Focus on building trust through open communication. Avoid relationships with those who have conflicting fire elements."
+      image: "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=800&q=80",
+      reading: [
+        "Your chart shows deep emotional intelligence with a strong Water influence. You naturally detect emotional shifts and value sincerity over surface chemistry.",
+        "You are romantic but selective. Attraction comes quickly, but long-term trust forms only through consistency, emotional maturity, and shared direction.",
+        "When work pressure rises, you may become quieter and more protective. This can look like distance, even when your intention is stability.",
+        "Partnerships are strongest with grounded personalities who balance your emotional depth with practical steadiness and clear communication."
+      ],
+      readingPoints: [
+        "Needs emotional safety and reliability",
+        "Values depth over performative romance",
+        "Sensitive to stress spillover from work",
+        "Best harmony with calm, grounded partners"
+      ],
+      advice: [
+        "Use regular emotional check-ins before tension accumulates. Small honest conversations prevent bigger misunderstandings.",
+        "Agree on conflict rules: pause when heated, return with clarity, and focus on one issue at a time.",
+        "Build repeatable rituals—date nights, shared planning, and quality time habits—to strengthen trust over time."
+      ],
+      advicePoints: [
+        "Communicate early and consistently",
+        "Create healthy conflict boundaries",
+        "Protect weekly connection rituals"
+      ]
     },
-    career: {
+    {
+      key: "career",
       title: "Career",
       icon: "💼",
-      reading: "Your chart shows a dominant metal element, indicating success in structured environments. Careers in finance, technology, or management will bring you fulfillment. Your leadership qualities will shine in positions of authority.",
-      advice: "Seek opportunities that allow you to organize and structure. Avoid overly creative or chaotic work environments."
+      image: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80",
+      reading: [
+        "Your profile is strong in strategy, process, and execution. You perform best where outcomes are clear and responsibility is real.",
+        "Leadership appears as calm structure under pressure. People rely on your judgment when situations are complex or unclear.",
+        "You naturally improve systems: reducing friction, clarifying priorities, and scaling what works.",
+        "Long periods of role ambiguity drain you. You need autonomy plus defined accountability to stay fully engaged."
+      ],
+      readingPoints: [
+        "Excellent at structured decision-making",
+        "Natural operator and strategic problem-solver",
+        "Strong fit for management and high-ownership roles",
+        "Needs clarity in scope and metrics"
+      ],
+      advice: [
+        "Choose opportunities by leverage, not only compensation: influence, ownership, and compounding skill growth.",
+        "Document measurable wins continuously. Visible impact accelerates promotion and negotiation outcomes.",
+        "Protect deep-focus blocks. Your best work happens in uninterrupted execution windows."
+      ],
+      advicePoints: [
+        "Prioritize high-leverage roles",
+        "Track outcomes with clear metrics",
+        "Design your week for focused execution"
+      ]
     },
-    lifestyle: {
+    {
+      key: "lifestyle",
       title: "Lifestyle",
       icon: "🌿",
-      reading: "Your wood element suggests a need for growth and expansion. You thrive in environments with nature and greenery. Regular exercise, especially outdoors, will enhance your energy and well-being.",
-      advice: "Incorporate more green spaces into your living environment. Practice meditation near water or trees to balance your energy."
+      image: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80",
+      reading: [
+        "Your vitality depends on rhythm, not intensity. Consistent routines stabilize both mood and performance.",
+        "Nature and movement are energetic reset points for your chart. Stagnant or noisy environments reduce clarity.",
+        "There is a strong space-mind connection: when your surroundings are cluttered, your thoughts become scattered.",
+        "You are built for sustainable momentum—alternating focused effort with intentional recovery."
+      ],
+      readingPoints: [
+        "Thrives on routine and environmental calm",
+        "Benefits strongly from outdoor movement",
+        "High sensitivity to workspace quality",
+        "Needs structured recovery to prevent burnout"
+      ],
+      advice: [
+        "Set a stable daily baseline: sleep window, hydration, and movement before high-demand tasks.",
+        "Simplify your main environment. Less visual noise means better decisions and lower emotional friction.",
+        "Treat rest as a performance system, not an afterthought. Recovery increases consistency and resilience."
+      ],
+      advicePoints: [
+        "Anchor your day with simple non-negotiables",
+        "Declutter spaces tied to focus",
+        "Schedule recovery with the same priority as work"
+      ]
     },
-    future: {
+    {
+      key: "future",
       title: "Future",
       icon: "🔮",
-      reading: "The coming year brings opportunities for transformation. Your luck cycle shows a shift toward prosperity in the autumn months. Major life decisions should be made after careful consideration of your elemental balance.",
-      advice: "Prepare for changes in the coming months. Stay adaptable and embrace new opportunities that align with your core strengths."
+      image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&q=80",
+      reading: [
+        "Your next cycle favors strategic preparation over impulsive expansion. The best outcomes come from aligned steps.",
+        "Growth accelerates when you concentrate on fewer priorities with stronger conviction.",
+        "A likely trajectory is moving from pure execution toward guidance, influence, and high-level decision roles.",
+        "Patience is a multiplier in your chart—building credibility, capability, and trusted relationships before major leaps."
+      ],
+      readingPoints: [
+        "Focus amplifies opportunity",
+        "Leadership influence likely to increase",
+        "Staged transitions outperform sudden jumps",
+        "Long-term alignment beats short-term urgency"
+      ],
+      advice: [
+        "Build a 12-month roadmap across skills, network, and financial stability.",
+        "Use a decision filter: Is this aligned with my long-term direction or just urgent now?",
+        "Run quarterly resets to remove misaligned commitments and protect momentum."
+      ],
+      advicePoints: [
+        "Plan in yearly and quarterly horizons",
+        "Filter opportunities through long-term alignment",
+        "Cut low-conviction commitments quickly"
+      ]
     },
-    problems: {
+    {
+      key: "problems",
       title: "Problems & Solutions",
       icon: "⚡",
-      reading: "Current challenges stem from an imbalance between your fire and water elements. You may experience stress or conflict in relationships. The solution lies in introducing more earth elements through grounding practices.",
-      advice: "Practice mindfulness and grounding exercises. Wear earth-tone colors and spend time in nature to restore balance."
+      image: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80",
+      reading: [
+        "Your most common challenge is over-processing. Seeing too many scenarios can slow commitment.",
+        "Under pressure, you tend to tighten control and carry more than necessary, increasing friction.",
+        "Because you remain functional while stressed, overload can stay hidden until motivation suddenly drops.",
+        "The pattern resolves through grounded structure: clear priorities, shorter loops, and practical decompression."
+      ],
+      readingPoints: [
+        "Analysis can delay action",
+        "Stress response leans toward rigidity",
+        "High risk of invisible burnout",
+        "Structure is your fastest stabilizer"
+      ],
+      advice: [
+        "Use a fast decision framework: objective, top options, deadline, commit.",
+        "Signal pressure early to trusted people so support starts before exhaustion.",
+        "Add low-friction reset habits after high-intensity blocks to clear emotional residue."
+      ],
+      advicePoints: [
+        "Set clear decision deadlines",
+        "Ask for support earlier",
+        "Practice daily decompression"
+      ]
     },
-    strengths: {
+    {
+      key: "strengths",
       title: "Strengths & Weaknesses",
       icon: "💪",
-      reading: "Your greatest strength is your adaptability and intuition. You can read situations and people well. However, your weakness is overthinking and indecision when faced with too many options.",
-      advice: "Trust your instincts more. Set clear goals to avoid analysis paralysis. Surround yourself with decisive people who complement your nature."
+      image: "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=800&q=80",
+      reading: [
+        "You are strong at pattern recognition and strategic clarity, especially in messy or uncertain situations.",
+        "Your interpersonal timing is excellent. You read motive, tone, and readiness accurately.",
+        "Weakness appears as over-calibration: waiting too long for perfect certainty before moving.",
+        "Another growth edge is delegation. High standards can make you keep too much ownership."
+      ],
+      readingPoints: [
+        "Advanced systems thinking",
+        "Strong emotional and social judgment",
+        "Can over-delay action for certainty",
+        "Needs scalable delegation habits"
+      ],
+      advice: [
+        "Turn your strengths into repeatable systems—playbooks, templates, and checklists.",
+        "Practice acting at 80% clarity, then refining with real-world feedback.",
+        "Delegate outcomes and success criteria, not just small tasks."
+      ],
+      advicePoints: [
+        "Systematize what you do well",
+        "Move earlier with iterative refinement",
+        "Delegate for scale, not relief"
+      ]
     },
-    colors: {
+    {
+      key: "colors",
       title: "Lucky Colors",
       icon: "🎨",
-      reading: "Your lucky colors are deep blue, emerald green, and silver. These colors enhance your water and metal elements. Avoid excessive red or orange as they may overstimulate your fire element.",
-      advice: "Wear blue or green for important meetings or dates. Use silver accessories to enhance your natural charm and authority."
+      image: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=800&q=80",
+      reading: [
+        "Your color profile supports emotional priming: deep blue for calm authority, green for renewal, metallic tones for precision.",
+        "These palettes reinforce your natural Water-Metal balance and help you project trust and steadiness.",
+        "High-heat tones like bright red/orange are powerful in moderation but can increase urgency when overused.",
+        "Best results come from dark neutrals with selective accents rather than constant visual intensity."
+      ],
+      readingPoints: [
+        "Blue supports clarity and composure",
+        "Green supports recovery and growth",
+        "Silver/graphite reinforces focus and authority",
+        "Use hot colors as controlled accents"
+      ],
+      advice: [
+        "For high-stakes moments, anchor your style with navy, charcoal, or deep gray plus one metallic accent.",
+        "Use greens in rest spaces to improve calm and emotional reset.",
+        "Apply warm colors intentionally when you need activation, not as a full-time base palette."
+      ],
+      advicePoints: [
+        "Create a signature calm-professional palette",
+        "Use restorative tones in personal spaces",
+        "Trigger energy with small warm accents"
+      ]
     },
-    luck: {
+    {
+      key: "luck",
       title: "Luck Days & Months",
       icon: "📅",
-      reading: "Your luckiest days are Tuesday and Saturday. The most fortunate months are October and February. During these times, your natural abilities are enhanced and opportunities flow more easily.",
-      advice: "Schedule important events on your lucky days. Use October for career moves and February for relationship developments."
+      image: "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=800&q=80",
+      reading: [
+        "Your timing profile improves outcomes when important actions are scheduled in high-alignment windows.",
+        "In strong periods, conversations land better, decisions feel cleaner, and execution friction is lower.",
+        "Lower-energy windows are not failures; they are optimal for maintenance, cleanup, and reflection.",
+        "Calendar strategy is a key strength for you: timing amplifies effort and consistency."
+      ],
+      readingPoints: [
+        "Use strong windows for visibility and decisions",
+        "Use quiet windows for maintenance and closure",
+        "Timing works best when pre-planned",
+        "Discipline still remains the foundation"
+      ],
+      advice: [
+        "Batch important meetings, launches, and difficult conversations into your strongest weekly windows.",
+        "Follow a monthly rhythm: plan, execute, communicate, review.",
+        "Track outcomes by timing for 90 days to personalize your luck strategy with real data."
+      ],
+      advicePoints: [
+        "Schedule impact tasks intentionally",
+        "Adopt a repeatable monthly cadence",
+        "Measure timing-to-outcome patterns"
+      ]
     }
-  };
+  ];
 
-  const tabs = Object.keys(fortuneData);
+  const activeItem = fortuneData[activeIndex];
 
   return (
     <section className="fortune-results-section" id="results">
@@ -369,40 +545,115 @@ function FortuneResultsSection() {
           </p>
         </div>
 
-        <div className="results-container">
-          {/* Tab Navigation */}
-          <div className="results-tabs">
-            {tabs.map((tab) => (
-              <button
-                key={tab}
-                className={`result-tab ${activeTab === tab ? "active" : ""}`}
-                onClick={() => setActiveTab(tab)}
-              >
-                <span className="tab-icon">{fortuneData[tab].icon}</span>
-                <span className="tab-label">{fortuneData[tab].title}</span>
-              </button>
-            ))}
-          </div>
+        <div className="results-split-layout">
+          {/* Left Sidebar */}
+          <aside className="results-sidebar">
+            <nav className="sidebar-nav">
+              {fortuneData.map((item, index) => (
+                <button
+                  key={item.key}
+                  className={`sidebar-item ${activeIndex === index ? "active" : ""}`}
+                  onClick={() => setActiveIndex(index)}
+                >
+                  <span className="sidebar-icon">{item.icon}</span>
+                  <div className="sidebar-text">
+                    <span className="sidebar-title">{item.title}</span>
+                    <span className="sidebar-desc">
+                      {index === 0 && "Love & relationships"}
+                      {index === 1 && "Career & work"}
+                      {index === 2 && "Daily habits"}
+                      {index === 3 && "Future outlook"}
+                      {index === 4 && "Challenges"}
+                      {index === 5 && "Self awareness"}
+                      {index === 6 && "Color guidance"}
+                      {index === 7 && "Timing strategy"}
+                    </span>
+                  </div>
+                  {activeIndex === index && (
+                    <div className="sidebar-indicator">
+                      <div className="indicator-bar" />
+                    </div>
+                  )}
+                </button>
+              ))}
+            </nav>
+          </aside>
 
-          {/* Result Content */}
-          <div className="result-content">
-            <div className="result-card">
-              <div className="result-header">
-                <span className="result-icon">{fortuneData[activeTab].icon}</span>
-                <h3>{fortuneData[activeTab].title}</h3>
+          {/* Right Content Panel */}
+          <main className="results-content-panel">
+            <div className="content-card">
+              {/* Header */}
+              <header className="content-header">
+                <h3 className="content-title">
+                  <span className="content-icon">{activeItem.icon}</span>
+                  {activeItem.title}
+                </h3>
+                <span className="content-counter">{activeIndex + 1} of {fortuneData.length}</span>
+              </header>
+
+              {/* Image */}
+              <div className="content-image-wrapper">
+                <img 
+                  src={activeItem.image} 
+                  alt={activeItem.title}
+                  className="content-image"
+                />
+                <div className="content-image-overlay" />
               </div>
-              <div className="result-body">
-                <div className="reading-section">
-                  <h4>Reading</h4>
-                  <p>{fortuneData[activeTab].reading}</p>
+
+              {/* Reading Section */}
+              <div className="content-section">
+                <h4 className="section-label reading-label">
+                  <span className="label-dot" />
+                  Reading
+                </h4>
+                <div className="section-body">
+                  {activeItem.reading.map((paragraph, idx) => (
+                    <p key={`reading-${idx}`} className="section-paragraph">{paragraph}</p>
+                  ))}
+                  <ul className="section-list">
+                    {activeItem.readingPoints.map((point, idx) => (
+                      <li key={`reading-point-${idx}`}>{point}</li>
+                    ))}
+                  </ul>
                 </div>
-                <div className="advice-section">
-                  <h4>Advice</h4>
-                  <p>{fortuneData[activeTab].advice}</p>
+              </div>
+
+              {/* Advice Section */}
+              <div className="content-section">
+                <h4 className="section-label advice-label">
+                  <span className="label-dot" />
+                  Advice
+                </h4>
+                <div className="section-body">
+                  {activeItem.advice.map((paragraph, idx) => (
+                    <p key={`advice-${idx}`} className="section-paragraph">{paragraph}</p>
+                  ))}
+                  <ul className="section-list">
+                    {activeItem.advicePoints.map((point, idx) => (
+                      <li key={`advice-point-${idx}`}>{point}</li>
+                    ))}
+                  </ul>
                 </div>
+              </div>
+
+              {/* Navigation Buttons */}
+              <div className="content-nav-buttons">
+                <button 
+                  className="nav-btn nav-btn-secondary"
+                  onClick={() => setActiveIndex(prev => prev === 0 ? fortuneData.length - 1 : prev - 1)}
+                >
+                  ← Previous
+                </button>
+                <button 
+                  className="nav-btn nav-btn-primary"
+                  onClick={() => setActiveIndex(prev => prev === fortuneData.length - 1 ? 0 : prev + 1)}
+                >
+                  Next →
+                </button>
               </div>
             </div>
-          </div>
+          </main>
         </div>
       </div>
     </section>
