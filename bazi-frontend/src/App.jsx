@@ -75,7 +75,7 @@ function HeroSection() {
   );
 }
 
-// Bazi Fortune Form Section
+// Bazi Fortune Form Section - Split Screen Design
 function FortuneFormSection() {
   const [formData, setFormData] = useState({
     name: "",
@@ -83,6 +83,7 @@ function FortuneFormSection() {
     birthTime: "",
     birthLocation: "",
     gender: "",
+    topic: "",
     lifeProblem: ""
   });
   const [submitted, setSubmitted] = useState(false);
@@ -95,22 +96,25 @@ function FortuneFormSection() {
   const handleSubmit = (e) => {
     e.preventDefault();
     setSubmitted(true);
-    // Here you would normally send data to backend
     console.log("Form submitted:", formData);
   };
 
+  const topics = [
+    { value: "", label: "Select a topic" },
+    { value: "relationship", label: "Relationship & Love" },
+    { value: "career", label: "Career & Business" },
+    { value: "wealth", label: "Wealth & Finance" },
+    { value: "health", label: "Health & Wellness" },
+    { value: "family", label: "Family & Home" },
+    { value: "education", label: "Education & Learning" },
+    { value: "travel", label: "Travel & Relocation" },
+    { value: "general", label: "General Life Guidance" }
+  ];
+
   return (
     <section className="fortune-form-section" id="features">
-      <div className="container">
-        <div className="section-header">
-          <span className="section-badge">Generate Your Report</span>
-          <h2 className="section-title">Enter Your Birth Details</h2>
-          <p className="section-subtitle">
-            Fill in your information to receive a personalized Bazi fortune reading
-          </p>
-        </div>
-
-        {submitted ? (
+      {submitted ? (
+        <div className="container">
           <div className="form-success">
             <div className="success-icon">✦</div>
             <h3>Your Fortune Report is Being Generated</h3>
@@ -122,101 +126,177 @@ function FortuneFormSection() {
               Generate Another Report
             </button>
           </div>
-        ) : (
-          <form className="bazi-form" onSubmit={handleSubmit}>
-            <div className="form-grid">
-              <div className="form-field">
-                <label htmlFor="name">Full Name</label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  placeholder="Enter your name"
-                  required
-                />
+        </div>
+      ) : (
+        <div className="split-form-container">
+          {/* Left Side - Form */}
+          <div className="form-left-panel">
+            <div className="form-header">
+              <div className="form-logo">
+                <span>八字</span>
               </div>
-
-              <div className="form-field">
-                <label htmlFor="birthDate">Birth Date</label>
-                <input
-                  type="date"
-                  id="birthDate"
-                  name="birthDate"
-                  value={formData.birthDate}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div className="form-field">
-                <label htmlFor="birthTime">Birth Time</label>
-                <input
-                  type="time"
-                  id="birthTime"
-                  name="birthTime"
-                  value={formData.birthTime}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div className="form-field">
-                <label htmlFor="birthLocation">Birth Location</label>
-                <input
-                  type="text"
-                  id="birthLocation"
-                  name="birthLocation"
-                  value={formData.birthLocation}
-                  onChange={handleChange}
-                  placeholder="City, Country"
-                  required
-                />
-              </div>
-
-              <div className="form-field">
-                <label htmlFor="gender">Gender</label>
-                <select
-                  id="gender"
-                  name="gender"
-                  value={formData.gender}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="">Select gender</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="non_binary">Non-binary</option>
-                  <option value="prefer_not_say">Prefer not to say</option>
-                </select>
-              </div>
+              <h2>Generate Your Report</h2>
+              <p>Enter your birth details to receive your personalized Bazi fortune reading</p>
             </div>
 
-            <div className="form-field form-field-full">
-              <label htmlFor="lifeProblem">What would you like guidance on?</label>
-              <textarea
-                id="lifeProblem"
-                name="lifeProblem"
-                value={formData.lifeProblem}
-                onChange={handleChange}
-                rows={4}
-                placeholder="Describe your current situation or questions (career, relationships, life direction...)"
-                required
-              />
-            </div>
+            <form className="split-bazi-form" onSubmit={handleSubmit}>
+              <div className="form-row">
+                <div className="form-field">
+                  <label htmlFor="name">Full Name *</label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="Enter your full name"
+                    required
+                  />
+                </div>
+              </div>
 
-            <div className="form-submit">
-              <button type="submit" className="btn-generate">
-                <span>Generate Fortune Report</span>
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <path d="M4 10H16M16 10L11 5M16 10L11 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
+              <div className="form-row two-col">
+                <div className="form-field">
+                  <label htmlFor="birthDate">Birth Date *</label>
+                  <input
+                    type="date"
+                    id="birthDate"
+                    name="birthDate"
+                    value={formData.birthDate}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div className="form-field">
+                  <label htmlFor="birthTime">Birth Time *</label>
+                  <input
+                    type="time"
+                    id="birthTime"
+                    name="birthTime"
+                    value={formData.birthTime}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-field">
+                  <label htmlFor="birthLocation">Birth Location *</label>
+                  <input
+                    type="text"
+                    id="birthLocation"
+                    name="birthLocation"
+                    value={formData.birthLocation}
+                    onChange={handleChange}
+                    placeholder="City, Country"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-row two-col">
+                <div className="form-field">
+                  <label htmlFor="gender">Gender *</label>
+                  <select
+                    id="gender"
+                    name="gender"
+                    value={formData.gender}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">Select gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="non_binary">Non-binary</option>
+                    <option value="prefer_not_say">Prefer not to say</option>
+                  </select>
+                </div>
+                <div className="form-field">
+                  <label htmlFor="topic">Topic of Interest *</label>
+                  <select
+                    id="topic"
+                    name="topic"
+                    value={formData.topic}
+                    onChange={handleChange}
+                    required
+                  >
+                    {topics.map((topic) => (
+                      <option key={topic.value} value={topic.value}>
+                        {topic.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-field">
+                  <label htmlFor="lifeProblem">Your Question or Situation *</label>
+                  <textarea
+                    id="lifeProblem"
+                    name="lifeProblem"
+                    value={formData.lifeProblem}
+                    onChange={handleChange}
+                    rows={3}
+                    placeholder="Describe what you'd like guidance on..."
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-submit">
+                <button type="submit" className="btn-generate-split">
+                  Generate Fortune Report
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Right Side - Visual Panel */}
+          <div className="form-right-panel">
+            <div className="right-panel-content">
+              <div className="panel-logo">
+                <span>八字</span>
+              </div>
+              <h3>BAZI FORTUNE</h3>
+              <p className="panel-tagline">Discover your destiny through ancient Chinese wisdom</p>
+              
+              <div className="panel-features">
+                <div className="panel-feature">
+                  <span className="feature-dot"></span>
+                  <span>Personalized birth chart analysis</span>
+                </div>
+                <div className="panel-feature">
+                  <span className="feature-dot"></span>
+                  <span>8 life areas covered</span>
+                </div>
+                <div className="panel-feature">
+                  <span className="feature-dot"></span>
+                  <span>AI-powered insights</span>
+                </div>
+              </div>
+
+              <div className="panel-footer">
+                <div className="panel-stat">
+                  <span className="stat-number">5,000+</span>
+                  <span className="stat-label">Years of Wisdom</span>
+                </div>
+                <div className="panel-stat">
+                  <span className="stat-number">八字</span>
+                  <span className="stat-label">Eight Characters</span>
+                </div>
+              </div>
             </div>
-          </form>
-        )}
-      </div>
+            
+            {/* Decorative Elements */}
+            <div className="panel-decoration">
+              <div className="decoration-circle"></div>
+              <div className="decoration-line"></div>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
