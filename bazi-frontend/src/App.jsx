@@ -1,36 +1,5 @@
 import { useState, useEffect } from "react";
-import { useMemo } from "react";
-import axios from "axios";
-import { API_BASE_URL } from "./config";
 import "./App.css";
-
-const initialForm = {
-  name: "",
-  birthDate: "",
-  birthTime: "",
-  birthLocation: "",
-  currentAddress: "",
-  jobPosition: "",
-  gender: "",
-  lifeProblem: "",
-};
-
-const tabs = ["aboutMyself", "career", "relationships", "business", "lifeGoals"];
-
-const tabLabelMap = {
-  aboutMyself: "About Myself",
-  career: "Career",
-  relationships: "Relationships",
-  business: "Business",
-  lifeGoals: "Life Goals",
-};
-
-const isSameForm = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-
-const parseProbability = (value) => {
-  const num = Number(String(value ?? "").replace("%", ""));
-  return Number.isFinite(num) ? num : 0;
-};
 
 // Navigation Component
 function Navigation() {
@@ -53,18 +22,18 @@ function Navigation() {
         </a>
         <div className="nav-links">
           <a href="#hero" className="nav-link">Home</a>
-          <a href="#reading" className="nav-link">Reading</a>
-          <a href="#history" className="nav-link">History</a>
+          <a href="#features" className="nav-link">Features</a>
+          <a href="#how-it-works" className="nav-link">How It Works</a>
           <a href="#about" className="nav-link">About</a>
         </div>
-        <a href="#reading" className="nav-cta">Get Started</a>
+        <a href="#coming-soon" className="nav-cta">Get Started</a>
       </div>
     </nav>
   );
 }
 
 // Hero Section Component
-function HeroSection({ onGetStarted }) {
+function HeroSection() {
   return (
     <section className="hero" id="hero">
       <div className="hero-bg">
@@ -85,15 +54,15 @@ function HeroSection({ onGetStarted }) {
           Understand yourself, your career, and your relationships.
         </p>
         <div className="hero-ctas">
-          <button className="hero-cta-primary" onClick={onGetStarted}>
+          <a href="#coming-soon" className="hero-cta-primary">
             Get Started
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-          </button>
-          <button className="hero-cta-secondary" onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })}>
+          </a>
+          <a href="#about" className="hero-cta-secondary">
             Learn More
-          </button>
+          </a>
         </div>
       </div>
       <div className="hero-scroll">
@@ -106,509 +75,243 @@ function HeroSection({ onGetStarted }) {
   );
 }
 
-export default function App() {
-  const [formData, setFormData] = useState(initialForm);
-  const [loading, setLoading] = useState(false);
-  const [isRecalculating, setIsRecalculating] = useState(false);
-  const [fortune, setFortune] = useState(null);
-  const [error, setError] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("aboutMyself");
-  const [lastCalculatedInput, setLastCalculatedInput] = useState(null);
-  const [history, setHistory] = useState([]);
-  const [comparePrimaryId, setComparePrimaryId] = useState(null);
-  const [compareSecondaryIds, setCompareSecondaryIds] = useState([]);
-
-  const hasUnsavedScenarioChanges = useMemo(() => {
-    if (!fortune || !lastCalculatedInput) return false;
-    return !isSameForm(formData, lastCalculatedInput);
-  }, [fortune, formData, lastCalculatedInput]);
-
-  const getBirthWeekday = (birthDate) => {
-    if (!birthDate) return "";
-    return new Date(birthDate).toLocaleDateString("en-US", { weekday: "long" });
-  };
-
-  const scrollToReading = () => {
-    document.getElementById('reading')?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  const runScenarioCalculation = async ({ mode = "generate", inputOverride = null } = {}) => {
-    const inputToUse = inputOverride || formData;
-
-    if (mode === "recalculate") {
-      setIsRecalculating(true);
-    } else {
-      setLoading(true);
+// Features Section
+function FeaturesSection() {
+  const features = [
+    {
+      icon: "🌙",
+      title: "Personal Reading",
+      description: "Get insights tailored to your unique birth chart based on date, time, and location."
+    },
+    {
+      icon: "⚡",
+      title: "Five Elements",
+      description: "Discover how Wood, Fire, Earth, Metal, and Water shape your personality and destiny."
+    },
+    {
+      icon: "💼",
+      title: "Career Guidance",
+      description: "Find your optimal career path and understand your professional strengths."
+    },
+    {
+      icon: "❤️",
+      title: "Relationship Insights",
+      description: "Understand your compatibility and relationship dynamics with others."
+    },
+    {
+      icon: "🎯",
+      title: "Life Goals",
+      description: "Align your ambitions with your cosmic blueprint for greater success."
+    },
+    {
+      icon: "🔮",
+      title: "Future Trends",
+      description: "Navigate upcoming opportunities and challenges with confidence."
     }
+  ];
 
-    setError("");
+  return (
+    <section className="features-section" id="features">
+      <div className="container">
+        <div className="section-header">
+          <span className="section-badge">Features</span>
+          <h2 className="section-title">What You&apos;ll Discover</h2>
+          <p className="section-subtitle">
+            Comprehensive insights across five key areas of your life
+          </p>
+        </div>
+        <div className="features-grid">
+          {features.map((feature, index) => (
+            <div className="feature-card" key={index}>
+              <div className="feature-icon">{feature.icon}</div>
+              <h3>{feature.title}</h3>
+              <p>{feature.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
 
-    try {
-      const payload = {
-        ...inputToUse,
-        birthWeekday: getBirthWeekday(inputToUse.birthDate),
-      };
-
-      const res = await axios.post(`${API_BASE_URL}/api/fortune`, payload, {
-        headers: { "Content-Type": "application/json" },
-      });
-
-      const nextFortune = res.data;
-      setFortune(nextFortune);
-      setFormData(inputToUse);
-      setLastCalculatedInput(inputToUse);
-      setIsModalOpen(true);
-      setActiveTab("aboutMyself");
-
-      const scenarios = nextFortune?.report?.scenarios || [];
-      const cashflows = nextFortune?.report?.cashflows || [];
-      const totalCashflowUsd = cashflows.reduce((sum, item) => sum + Number(item?.amountUsd || 0), 0);
-      const avgScenarioProbability =
-        scenarios.length > 0
-          ? scenarios.reduce((sum, item) => sum + parseProbability(item?.probability), 0) / scenarios.length
-          : 0;
-
-      setHistory((prev) => [
-        {
-          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-          timestamp: new Date().toISOString(),
-          input: inputToUse,
-          scenarioCount: scenarios.length,
-          totalCashflowUsd,
-          avgScenarioProbability,
-        },
-        ...prev,
-      ]);
-    } catch (err) {
-      setError(err?.response?.data?.message || "Failed to generate fortune.");
-    } finally {
-      setLoading(false);
-      setIsRecalculating(false);
+// How It Works Section
+function HowItWorksSection() {
+  const steps = [
+    {
+      number: "01",
+      title: "Enter Your Details",
+      description: "Share your birth date, time, and location for accurate calculations."
+    },
+    {
+      number: "02",
+      title: "AI Analysis",
+      description: "Our advanced AI interprets your Bazi chart using ancient wisdom."
+    },
+    {
+      number: "03",
+      title: "Get Your Reading",
+      description: "Receive personalized insights and actionable guidance."
     }
-  };
+  ];
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  return (
+    <section className="how-it-works-section" id="how-it-works">
+      <div className="container">
+        <div className="section-header">
+          <span className="section-badge">How It Works</span>
+          <h2 className="section-title">Three Simple Steps</h2>
+          <p className="section-subtitle">
+            Your personalized fortune reading in minutes
+          </p>
+        </div>
+        <div className="steps-grid">
+          {steps.map((step, index) => (
+            <div className="step-card" key={index}>
+              <span className="step-number">{step.number}</span>
+              <h3>{step.title}</h3>
+              <p>{step.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
 
-  const handleSubmit = async (e) => {
+// Coming Soon Section (replaces the form)
+function ComingSoonSection() {
+  const [email, setEmail] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = (e) => {
     e.preventDefault();
-    await runScenarioCalculation({ mode: "generate" });
-  };
-
-  const handleRecalculateCurrent = async () => {
-    await runScenarioCalculation({ mode: "recalculate" });
-  };
-
-  const handleRecalculateFromHistory = async (historyItem) => {
-    await runScenarioCalculation({ mode: "recalculate", inputOverride: historyItem.input });
-  };
-
-  const handleCompareCardClick = (cardId) => {
-    if (!comparePrimaryId) {
-      setComparePrimaryId(cardId);
-      setCompareSecondaryIds([]);
-      return;
-    }
-
-    if (comparePrimaryId === cardId) {
-      setComparePrimaryId(null);
-      setCompareSecondaryIds([]);
-      return;
-    }
-
-    if (compareSecondaryIds.includes(cardId)) {
-      setCompareSecondaryIds((prev) => prev.filter((id) => id !== cardId));
-      return;
-    }
-
-    if (compareSecondaryIds.length < 2) {
-      setCompareSecondaryIds((prev) => [...prev, cardId]);
+    if (email) {
+      setSubmitted(true);
+      setEmail("");
     }
   };
 
-  const clearCompareSelection = () => {
-    setComparePrimaryId(null);
-    setCompareSecondaryIds([]);
-  };
+  return (
+    <section className="coming-soon-section" id="coming-soon">
+      <div className="container">
+        <div className="coming-soon-content">
+          <span className="section-badge">Coming Soon</span>
+          <h2 className="section-title">Be the First to Know</h2>
+          <p className="section-subtitle">
+            We&apos;re putting the finishing touches on our AI-powered Bazi fortune teller.
+            <br />
+            Sign up to get early access when we launch.
+          </p>
+          
+          {submitted ? (
+            <div className="success-message">
+              <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                <circle cx="24" cy="24" r="24" fill="#28a745" fillOpacity="0.1"/>
+                <path d="M16 24L21 29L32 18" stroke="#28a745" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <p>Thanks! We&apos;ll notify you when we launch.</p>
+            </div>
+          ) : (
+            <form className="waitlist-form" onSubmit={handleSubmit}>
+              <input
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              <button type="submit" className="btn-primary">
+                Join Waitlist
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
 
-  const closeModal = () => setIsModalOpen(false);
+// About Section
+function AboutSection() {
+  return (
+    <section className="about-section" id="about">
+      <div className="container">
+        <div className="about-content">
+          <div className="about-text">
+            <span className="section-badge">About Bazi</span>
+            <h2 className="section-title">Ancient Wisdom for Modern Life</h2>
+            <p>
+              Bazi (八字), or &quot;Eight Characters,&quot; is a traditional Chinese metaphysical 
+              system that has been used for thousands of years to understand human destiny. 
+              By analyzing the cosmic energy at the moment of your birth, Bazi reveals 
+              insights about your personality, strengths, challenges, and life path.
+            </p>
+            <p>
+              Our platform combines this ancient wisdom with modern AI technology to provide 
+              personalized, actionable guidance for your career, relationships, and personal growth.
+            </p>
+            <div className="about-stats">
+              <div className="stat">
+                <span className="stat-number">5,000+</span>
+                <span className="stat-label">Years of Wisdom</span>
+              </div>
+              <div className="stat">
+                <span className="stat-number">5</span>
+                <span className="stat-label">Key Life Areas</span>
+              </div>
+              <div className="stat">
+                <span className="stat-number">∞</span>
+                <span className="stat-label">Possibilities</span>
+              </div>
+            </div>
+          </div>
+          <div className="about-image">
+            <div className="image-placeholder">
+              <span>八字</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
 
-  const rows = fortune?.categories?.[activeTab] || [];
+// Footer
+function Footer() {
+  return (
+    <footer className="footer">
+      <div className="container">
+        <div className="footer-content">
+          <div className="footer-brand">
+            <span className="footer-logo">八字 Bazi</span>
+            <p>Ancient wisdom. Modern insight.</p>
+          </div>
+          <div className="footer-links">
+            <a href="#hero">Home</a>
+            <a href="#features">Features</a>
+            <a href="#how-it-works">How It Works</a>
+            <a href="#about">About</a>
+          </div>
+        </div>
+        <div className="footer-bottom">
+          <p>© 2026 Bazi Project. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+  );
+}
 
-  const comparedCards = useMemo(() => {
-    const selectedIds = [comparePrimaryId, ...compareSecondaryIds].filter(Boolean);
-    return selectedIds
-      .map((id) => history.find((item) => item.id === id))
-      .filter(Boolean);
-  }, [comparePrimaryId, compareSecondaryIds, history]);
-
-  const chartMax = useMemo(() => {
-    const scenarioMax = Math.max(1, ...comparedCards.map((c) => c.scenarioCount || 0));
-    const probabilityMax = Math.max(1, ...comparedCards.map((c) => c.avgScenarioProbability || 0));
-    const cashflowMax = Math.max(1, ...comparedCards.map((c) => c.totalCashflowUsd || 0));
-    return {
-      scenarioMax,
-      probabilityMax,
-      cashflowMax,
-    };
-  }, [comparedCards]);
-
+// Main App
+export default function App() {
   return (
     <div className="app">
       <Navigation />
-      <HeroSection onGetStarted={scrollToReading} />
-
-      {/* Reading Section */}
-      <section className="reading-section" id="reading">
-        <div className="container">
-          <div className="section-header">
-            <span className="section-badge">Your Journey Begins</span>
-            <h2 className="section-title">Enter Your Details</h2>
-            <p className="section-subtitle">Share your birth information to reveal your personalized cosmic blueprint</p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="form">
-            <div className="form-grid">
-              <label className="form-field">
-                <span className="form-label">Full Name</span>
-                <input 
-                  name="name" 
-                  value={formData.name} 
-                  onChange={handleChange} 
-                  placeholder="Enter your name"
-                  required 
-                />
-              </label>
-
-              <label className="form-field">
-                <span className="form-label">Birth Date</span>
-                <input 
-                  type="date" 
-                  name="birthDate" 
-                  value={formData.birthDate} 
-                  onChange={handleChange} 
-                  required 
-                />
-              </label>
-
-              <label className="form-field">
-                <span className="form-label">Birth Time</span>
-                <input 
-                  type="time" 
-                  name="birthTime" 
-                  value={formData.birthTime} 
-                  onChange={handleChange} 
-                  required 
-                />
-              </label>
-
-              <label className="form-field">
-                <span className="form-label">Birth Location</span>
-                <input 
-                  name="birthLocation" 
-                  value={formData.birthLocation} 
-                  onChange={handleChange} 
-                  placeholder="City, Country"
-                  required 
-                />
-              </label>
-
-              <label className="form-field">
-                <span className="form-label">Current Address</span>
-                <input 
-                  name="currentAddress" 
-                  value={formData.currentAddress} 
-                  onChange={handleChange} 
-                  placeholder="Where you live now"
-                  required 
-                />
-              </label>
-
-              <label className="form-field">
-                <span className="form-label">Job Position</span>
-                <input 
-                  name="jobPosition" 
-                  value={formData.jobPosition} 
-                  onChange={handleChange} 
-                  placeholder="Your current role"
-                  required 
-                />
-              </label>
-
-              <label className="form-field">
-                <span className="form-label">Gender</span>
-                <select name="gender" value={formData.gender} onChange={handleChange} required>
-                  <option value="">Select gender</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="non_binary">Non-binary</option>
-                  <option value="prefer_not_say">Prefer not to say</option>
-                </select>
-              </label>
-            </div>
-
-            <label className="form-field form-field-full">
-              <span className="form-label">Life Challenge</span>
-              <textarea
-                name="lifeProblem"
-                value={formData.lifeProblem}
-                onChange={handleChange}
-                rows={4}
-                placeholder="Describe what you're currently facing or seeking guidance on..."
-                required
-              />
-            </label>
-
-            <div className="form-actions">
-              <button type="submit" className="btn-primary" disabled={loading || isRecalculating}>
-                {loading ? (
-                  <>
-                    <span className="spinner" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    Reveal My Fortune
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </>
-                )}
-              </button>
-
-              {hasUnsavedScenarioChanges && (
-                <button type="button" className="btn-secondary" onClick={handleRecalculateCurrent} disabled={isRecalculating || loading}>
-                  Recalculate Scenario
-                </button>
-              )}
-            </div>
-
-            {error && <p className="error">{error}</p>}
-          </form>
-        </div>
-      </section>
-
-      {/* Results Modal */}
-      {isModalOpen && fortune && (
-        <div className="modal-overlay" onClick={closeModal}>
-          <div className="modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
-            <div className="modal-header">
-              <div>
-                <h2 className="modal-title">Your Fortune Reading</h2>
-                <p className="modal-subtitle">Generated for {formData.name}</p>
-              </div>
-              <button className="modal-close" onClick={closeModal} aria-label="Close modal">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-            </div>
-
-            <div className="tabs">
-              {tabs.map((tab) => (
-                <button
-                  type="button"
-                  key={tab}
-                  className={`tab ${activeTab === tab ? "tab-active" : ""}`}
-                  onClick={() => setActiveTab(tab)}
-                >
-                  {tabLabelMap[tab]}
-                </button>
-              ))}
-            </div>
-
-            <div className="compare-bar">
-              <strong>Compare Scenarios</strong>
-              <span>Pick 1 base card (green), then up to 2 more (yellow)</span>
-              <button type="button" className="btn-text" onClick={clearCompareSelection}>
-                Clear
-              </button>
-            </div>
-
-            {comparedCards.length > 0 && (
-              <div className="compare-panel">
-                <h3>Scenario Comparison</h3>
-                
-                <div className="graph-block">
-                  <h4>Number of Scenarios</h4>
-                  {comparedCards.map((card) => (
-                    <div className="graph-row" key={`scenario-${card.id}`}>
-                      <span className="graph-label">{card.input.name || "Unnamed"}</span>
-                      <div className="graph-track">
-                        <div
-                          className={`graph-bar ${comparePrimaryId === card.id ? "bar-primary" : "bar-secondary"}`}
-                          style={{ width: `${((card.scenarioCount || 0) / chartMax.scenarioMax) * 100}%` }}
-                        />
-                      </div>
-                      <span className="graph-value">{card.scenarioCount || 0}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="graph-block">
-                  <h4>Average Probability (%)</h4>
-                  {comparedCards.map((card) => (
-                    <div className="graph-row" key={`probability-${card.id}`}>
-                      <span className="graph-label">{card.input.name || "Unnamed"}</span>
-                      <div className="graph-track">
-                        <div
-                          className={`graph-bar ${comparePrimaryId === card.id ? "bar-primary" : "bar-secondary"}`}
-                          style={{ width: `${((card.avgScenarioProbability || 0) / chartMax.probabilityMax) * 100}%` }}
-                        />
-                      </div>
-                      <span className="graph-value">{(card.avgScenarioProbability || 0).toFixed(1)}%</span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="graph-block">
-                  <h4>Total Cashflow (USD)</h4>
-                  {comparedCards.map((card) => (
-                    <div className="graph-row" key={`cashflow-${card.id}`}>
-                      <span className="graph-label">{card.input.name || "Unnamed"}</span>
-                      <div className="graph-track">
-                        <div
-                          className={`graph-bar ${comparePrimaryId === card.id ? "bar-primary" : "bar-secondary"}`}
-                          style={{ width: `${((card.totalCashflowUsd || 0) / chartMax.cashflowMax) * 100}%` }}
-                        />
-                      </div>
-                      <span className="graph-value">${Number(card.totalCashflowUsd || 0).toFixed(0)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="results-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Topic</th>
-                    <th>Reading</th>
-                    <th>Advice</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.length > 0 ? (
-                    rows.map((row, i) => (
-                      <tr key={i}>
-                        <td>{row.topic}</td>
-                        <td>{row.reading}</td>
-                        <td>{row.advice}</td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={3}>No insights available for this category yet.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="history-section" id="history">
-              <h3>Scenario History</h3>
-              {history.length === 0 ? (
-                <p className="empty-state">No history yet.</p>
-              ) : (
-                <div className="history-grid">
-                  {history.map((item) => (
-                    <article
-                      className={`history-card ${
-                        comparePrimaryId === item.id
-                          ? "compare-primary"
-                          : compareSecondaryIds.includes(item.id)
-                            ? "compare-secondary"
-                            : ""
-                      }`}
-                      key={item.id}
-                      onClick={() => handleCompareCardClick(item.id)}
-                    >
-                      <strong>{item.input.name || "Unnamed"}</strong>
-                      <span>{new Date(item.timestamp).toLocaleString()}</span>
-                      <span>{item.scenarioCount} scenario(s)</span>
-                      <button
-                        type="button"
-                        className="btn-text"
-                        disabled={isRecalculating || loading}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRecalculateFromHistory(item);
-                        }}
-                      >
-                        Recalculate
-                      </button>
-                    </article>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {isRecalculating && (
-        <div className="modal-overlay" role="status" aria-live="polite">
-          <div className="recalc-modal">
-            <span className="spinner" />
-            Recalculating scenario...
-          </div>
-        </div>
-      )}
-
-      {/* About Section */}
-      <section className="about-section" id="about">
-        <div className="container">
-          <div className="section-header">
-            <span className="section-badge">About Bazi</span>
-            <h2 className="section-title">Ancient Wisdom</h2>
-            <p className="section-subtitle">
-              Bazi (八字), or "Eight Characters," is a traditional Chinese metaphysical system 
-              that analyzes your destiny based on birth date and time.
-            </p>
-          </div>
-          <div className="about-grid">
-            <div className="about-card">
-              <div className="about-icon">🌙</div>
-              <h3>Cosmic Blueprint</h3>
-              <p>Your birth moment captures the unique energy pattern of the universe at that instant.</p>
-            </div>
-            <div className="about-card">
-              <div className="about-icon">⚡</div>
-              <h3>Five Elements</h3>
-              <p>Wood, Fire, Earth, Metal, and Water interact to reveal your personality and potential.</p>
-            </div>
-            <div className="about-card">
-              <div className="about-icon">🔮</div>
-              <h3>Life Guidance</h3>
-              <p>Understand your strengths, challenges, and optimal paths in career and relationships.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="footer">
-        <div className="container">
-          <div className="footer-content">
-            <div className="footer-brand">
-              <span className="footer-logo">八字 Bazi</span>
-              <p>Ancient wisdom. Modern insight.</p>
-            </div>
-            <div className="footer-links">
-              <a href="#hero">Home</a>
-              <a href="#reading">Reading</a>
-              <a href="#about">About</a>
-            </div>
-          </div>
-          <div className="footer-bottom">
-            <p>© 2026 Bazi Project. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <HeroSection />
+      <FeaturesSection />
+      <HowItWorksSection />
+      <ComingSoonSection />
+      <AboutSection />
+      <Footer />
     </div>
   );
 }
