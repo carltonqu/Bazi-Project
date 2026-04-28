@@ -357,53 +357,163 @@ body {
 }
 
 /* ========================================
-   FEATURES SECTION
+   FORTUNE FORM SECTION
    ======================================== */
 
-.features-section {
+.fortune-form-section {
   padding: 120px 0;
-  background: var(--light-bg);
+  background: linear-gradient(135deg, var(--light-bg) 0%, #f5f4f2 100%);
 }
 
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-  gap: 24px;
-}
-
-.feature-card {
-  padding: 40px 32px;
+.bazi-form {
+  max-width: 800px;
+  margin: 0 auto;
   background: white;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 48px;
   border-radius: var(--radius-lg);
-  text-align: center;
-  transition: all var(--transition-base);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
-.feature-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
-  border-color: rgba(230, 57, 70, 0.2);
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
 }
 
-.feature-icon {
-  font-size: 48px;
-  margin-bottom: 20px;
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.feature-card h3 {
-  font-family: var(--font-display);
-  font-size: 22px;
+.form-field-full {
+  grid-column: 1 / -1;
+}
+
+.form-field label {
+  font-size: 14px;
   font-weight: 600;
-  margin-bottom: 12px;
+  color: var(--light-text);
+  letter-spacing: 0.3px;
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+  padding: 14px 18px;
+  background: #fafafa;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--light-text);
+  outline: none;
+  transition: all var(--transition-fast);
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+  border-color: var(--china-red);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.1);
+}
+
+.form-field input::placeholder,
+.form-field textarea::placeholder {
+  color: #999;
+}
+
+.form-field textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.form-submit {
+  margin-top: 32px;
+  text-align: center;
+}
+
+.btn-generate {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 40px;
+  background: linear-gradient(135deg, var(--china-red), #c41e3a);
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: 0 4px 20px rgba(230, 57, 70, 0.35);
+}
+
+.btn-generate:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 28px rgba(230, 57, 70, 0.45);
+}
+
+.btn-generate svg {
+  transition: transform var(--transition-fast);
+}
+
+.btn-generate:hover svg {
+  transform: translateX(4px);
+}
+
+/* Form Success State */
+.form-success {
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 60px 40px;
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+}
+
+.success-icon {
+  font-size: 64px;
+  color: var(--china-gold);
+  margin-bottom: 24px;
+}
+
+.form-success h3 {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 600;
+  margin-bottom: 16px;
   color: var(--light-text);
 }
 
-.feature-card p {
-  font-size: 15px;
+.form-success p {
+  font-size: 16px;
   color: #666;
-  line-height: 1.6;
+  line-height: 1.7;
+  margin-bottom: 32px;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  padding: 14px 28px;
+  background: transparent;
+  color: var(--light-text);
+  font-size: 15px;
+  font-weight: 600;
+  border: 2px solid rgba(0, 0, 0, 0.15);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-secondary:hover {
+  border-color: var(--china-red);
+  color: var(--china-red);
 }
 
 /* ========================================

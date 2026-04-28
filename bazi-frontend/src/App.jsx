@@ -75,60 +75,147 @@ function HeroSection() {
   );
 }
 
-// Features Section
-function FeaturesSection() {
-  const features = [
-    {
-      icon: "🌙",
-      title: "Personal Reading",
-      description: "Get insights tailored to your unique birth chart based on date, time, and location."
-    },
-    {
-      icon: "⚡",
-      title: "Five Elements",
-      description: "Discover how Wood, Fire, Earth, Metal, and Water shape your personality and destiny."
-    },
-    {
-      icon: "💼",
-      title: "Career Guidance",
-      description: "Find your optimal career path and understand your professional strengths."
-    },
-    {
-      icon: "❤️",
-      title: "Relationship Insights",
-      description: "Understand your compatibility and relationship dynamics with others."
-    },
-    {
-      icon: "🎯",
-      title: "Life Goals",
-      description: "Align your ambitions with your cosmic blueprint for greater success."
-    },
-    {
-      icon: "🔮",
-      title: "Future Trends",
-      description: "Navigate upcoming opportunities and challenges with confidence."
-    }
-  ];
+// Bazi Fortune Form Section
+function FortuneFormSection() {
+  const [formData, setFormData] = useState({
+    name: "",
+    birthDate: "",
+    birthTime: "",
+    birthLocation: "",
+    gender: "",
+    lifeProblem: ""
+  });
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setSubmitted(true);
+    // Here you would normally send data to backend
+    console.log("Form submitted:", formData);
+  };
 
   return (
-    <section className="features-section" id="features">
+    <section className="fortune-form-section" id="features">
       <div className="container">
         <div className="section-header">
-          <span className="section-badge">Features</span>
-          <h2 className="section-title">What You&apos;ll Discover</h2>
+          <span className="section-badge">Generate Your Report</span>
+          <h2 className="section-title">Enter Your Birth Details</h2>
           <p className="section-subtitle">
-            Comprehensive insights across five key areas of your life
+            Fill in your information to receive a personalized Bazi fortune reading
           </p>
         </div>
-        <div className="features-grid">
-          {features.map((feature, index) => (
-            <div className="feature-card" key={index}>
-              <div className="feature-icon">{feature.icon}</div>
-              <h3>{feature.title}</h3>
-              <p>{feature.description}</p>
+
+        {submitted ? (
+          <div className="form-success">
+            <div className="success-icon">✦</div>
+            <h3>Your Fortune Report is Being Generated</h3>
+            <p>We&apos;re analyzing your birth chart using ancient Chinese metaphysics. Your personalized report will be ready shortly.</p>
+            <button 
+              className="btn-secondary" 
+              onClick={() => setSubmitted(false)}
+            >
+              Generate Another Report
+            </button>
+          </div>
+        ) : (
+          <form className="bazi-form" onSubmit={handleSubmit}>
+            <div className="form-grid">
+              <div className="form-field">
+                <label htmlFor="name">Full Name</label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  placeholder="Enter your name"
+                  required
+                />
+              </div>
+
+              <div className="form-field">
+                <label htmlFor="birthDate">Birth Date</label>
+                <input
+                  type="date"
+                  id="birthDate"
+                  name="birthDate"
+                  value={formData.birthDate}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <div className="form-field">
+                <label htmlFor="birthTime">Birth Time</label>
+                <input
+                  type="time"
+                  id="birthTime"
+                  name="birthTime"
+                  value={formData.birthTime}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <div className="form-field">
+                <label htmlFor="birthLocation">Birth Location</label>
+                <input
+                  type="text"
+                  id="birthLocation"
+                  name="birthLocation"
+                  value={formData.birthLocation}
+                  onChange={handleChange}
+                  placeholder="City, Country"
+                  required
+                />
+              </div>
+
+              <div className="form-field">
+                <label htmlFor="gender">Gender</label>
+                <select
+                  id="gender"
+                  name="gender"
+                  value={formData.gender}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="">Select gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="non_binary">Non-binary</option>
+                  <option value="prefer_not_say">Prefer not to say</option>
+                </select>
+              </div>
             </div>
-          ))}
-        </div>
+
+            <div className="form-field form-field-full">
+              <label htmlFor="lifeProblem">What would you like guidance on?</label>
+              <textarea
+                id="lifeProblem"
+                name="lifeProblem"
+                value={formData.lifeProblem}
+                onChange={handleChange}
+                rows={4}
+                placeholder="Describe your current situation or questions (career, relationships, life direction...)"
+                required
+              />
+            </div>
+
+            <div className="form-submit">
+              <button type="submit" className="btn-generate">
+                <span>Generate Fortune Report</span>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path d="M4 10H16M16 10L11 5M16 10L11 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </section>
   );
@@ -307,7 +394,7 @@ export default function App() {
     <div className="app">
       <Navigation />
       <HeroSection />
-      <FeaturesSection />
+      <FortuneFormSection />
       <HowItWorksSection />
       <ComingSoonSection />
       <AboutSection />
