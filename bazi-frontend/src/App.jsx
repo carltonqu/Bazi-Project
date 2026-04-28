@@ -49,9 +49,9 @@ function HeroSection() {
           Discover Your Destiny
         </h1>
         <p className="hero-subtitle">
-          Unlock the secrets of your birth chart with AI-powered Bazi fortune telling.
+          Explore the ancient art of Chinese metaphysics through your unique birth chart.
           <br />
-          Understand yourself, your career, and your relationships.
+          Discover insights about your destiny, career path, and relationships.
         </p>
         <div className="hero-ctas">
           <a href="#coming-soon" className="hero-cta-primary">
