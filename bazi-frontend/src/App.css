@@ -1,55 +1,37 @@
 /* ========================================
-   BAZI FORTUNE TELLER - CHINESE AESTHETIC
-   Traditional Chinese Mountains & Rivers
+   BAZI FORTUNE TELLER - DARK IMMERSIVE HERO
+   Chinese Mountains with Bright Text
    ======================================== */
 
-/* CSS Variables - Traditional Chinese Colors */
+/* CSS Variables */
 :root {
-  /* Primary Chinese Colors */
-  --china-red: #C41E3A;
-  --china-red-dark: #8B0000;
-  --china-gold: #D4AF37;
-  --china-gold-light: #F4D03F;
-  --china-jade: #00A86B;
-  --china-ink: #2C3E50;
-  --china-ink-light: #34495E;
+  /* Dark Theme Colors */
+  --dark-bg: #0a0a0f;
+  --dark-bg-light: #12121a;
+  --dark-surface: #1a1a24;
   
-  /* Mountain & Nature Colors */
-  --mountain-mist: #E8E8E8;
-  --mountain-gray: #7F8C8D;
-  --mountain-dark: #4A5568;
-  --river-blue: #5DADE2;
-  --river-deep: #2E86AB;
-  --bamboo-green: #7CB342;
-  --paper-cream: #FDF5E6;
-  --paper-aged: #F5F5DC;
+  /* Chinese Accent Colors */
+  --china-red: #E63946;
+  --china-red-glow: rgba(230, 57, 70, 0.4);
+  --china-gold: #FFD700;
+  --china-gold-soft: #D4AF37;
   
-  /* Background Colors */
-  --color-bg: var(--paper-cream);
-  --color-bg-dark: var(--china-ink);
-  --color-text: var(--china-ink);
-  --color-text-light: var(--mountain-gray);
-  --color-text-muted: #95A5A6;
-  --color-white: #ffffff;
-  --color-accent: var(--china-red);
-  --color-accent-dark: var(--china-red-dark);
-  --color-gold: var(--china-gold);
-  --color-border: rgba(139, 69, 19, 0.15);
-  --color-border-light: rgba(139, 69, 19, 0.08);
+  /* Text Colors */
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.75);
+  --text-muted: rgba(255, 255, 255, 0.5);
+  
+  /* Light Theme (for other sections) */
+  --light-bg: #faf9f7;
+  --light-text: #1a1a1a;
   
   --font-display: 'Playfair Display', Georgia, serif;
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
   --radius-full: 9999px;
-  
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
-  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.15);
   
   --transition-fast: 0.15s ease;
   --transition-base: 0.25s ease;
@@ -69,9 +51,9 @@ html {
 
 body {
   font-family: var(--font-body);
-  background-color: var(--color-bg);
-  color: var(--color-text);
-  line-height: 1.7;
+  background-color: var(--light-bg);
+  color: var(--light-text);
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -87,46 +69,32 @@ body {
 }
 
 /* ========================================
-   NAVIGATION - Floating Pill Style
+   NAVIGATION - Transparent on Dark
    ======================================== */
 
 .nav {
   position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 0;
+  left: 0;
+  right: 0;
   z-index: 1000;
-  width: auto;
+  padding: 20px 40px;
   transition: all var(--transition-base);
 }
 
 .nav-scrolled {
-  top: 16px;
+  background: rgba(10, 10, 15, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .nav-container {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 14px 10px 18px;
-  background: rgba(253, 245, 230, 0.92);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: var(--radius-full);
-  border: 1px solid rgba(196, 30, 58, 0.2);
-  box-shadow: 
-    0 2px 8px rgba(0, 0, 0, 0.06),
-    0 4px 16px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  transition: all var(--transition-base);
-}
-
-.nav-scrolled .nav-container {
-  background: rgba(253, 245, 230, 0.98);
-  box-shadow: 
-    0 2px 12px rgba(0, 0, 0, 0.08),
-    0 8px 24px rgba(0, 0, 0, 0.06);
-  border-color: rgba(196, 30, 58, 0.3);
+  justify-content: space-between;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .nav-logo {
@@ -134,17 +102,14 @@ body {
   align-items: center;
   gap: 10px;
   text-decoration: none;
-  color: var(--china-red);
+  color: var(--text-primary);
   font-weight: 700;
-  font-size: 18px;
-  padding-right: 14px;
-  border-right: 1px solid rgba(196, 30, 58, 0.2);
+  font-size: 20px;
 }
 
 .nav-logo-icon {
-  font-size: 24px;
+  font-size: 26px;
   color: var(--china-red);
-  font-weight: 900;
 }
 
 .nav-logo-text {
@@ -155,45 +120,42 @@ body {
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
 }
 
 .nav-link {
-  padding: 8px 16px;
+  padding: 10px 18px;
   text-decoration: none;
-  color: var(--mountain-gray);
-  font-size: 14px;
+  color: var(--text-secondary);
+  font-size: 15px;
   font-weight: 500;
   border-radius: var(--radius-full);
   transition: all var(--transition-fast);
 }
 
 .nav-link:hover {
-  color: var(--china-red);
-  background: rgba(196, 30, 58, 0.08);
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .nav-cta {
-  padding: 10px 22px;
-  background: linear-gradient(135deg, var(--china-red), var(--china-red-dark));
-  color: var(--color-white);
+  padding: 10px 24px;
+  background: var(--text-primary);
+  color: var(--dark-bg);
   text-decoration: none;
   font-size: 14px;
   font-weight: 600;
   border-radius: var(--radius-full);
-  margin-left: 6px;
   transition: all var(--transition-fast);
-  box-shadow: 0 2px 8px rgba(196, 30, 58, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .nav-cta:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(196, 30, 58, 0.4);
+  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.3);
 }
 
 /* ========================================
-   HERO SECTION - Chinese Mountains
+   HERO SECTION - Dark Immersive
    ======================================== */
 
 .hero {
@@ -204,6 +166,7 @@ body {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  background: var(--dark-bg);
 }
 
 .hero-bg {
@@ -212,47 +175,31 @@ body {
   z-index: 0;
 }
 
-/* Chinese Ink Wash Mountain Landscape */
+/* Dark Chinese Mountain Landscape */
 .hero-bg-image {
   position: absolute;
   inset: 0;
   background: 
-    /* Mist layer */
-    linear-gradient(
-      to bottom,
-      rgba(253, 245, 230, 0.1) 0%,
-      transparent 30%,
-      rgba(253, 245, 230, 0.3) 70%,
-      rgba(253, 245, 230, 0.95) 100%
-    ),
-    /* Chinese mountain landscape */
-    url('https://images.unsplash.com/photo-1513415564515-763d91423bdd?w=1920&q=85') center/cover no-repeat;
-  filter: saturate(0.7) contrast(1.1) brightness(1.05);
+    url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=85') center/cover no-repeat;
+  filter: brightness(0.4) saturate(0.8) contrast(1.1);
 }
 
-/* Ink wash overlay effect */
+/* Dark overlay for text readability */
 .hero-bg-overlay {
   position: absolute;
   inset: 0;
   background: 
-    /* Top mist */
     radial-gradient(
-      ellipse 80% 50% at 50% 0%,
-      rgba(253, 245, 230, 0.9) 0%,
-      transparent 60%
+      ellipse 80% 50% at 50% 100%,
+      rgba(10, 10, 15, 0.95) 0%,
+      transparent 70%
     ),
-    /* Bottom fade to paper color */
     linear-gradient(
       to bottom,
-      transparent 0%,
-      transparent 50%,
-      rgba(253, 245, 230, 0.7) 80%,
-      rgba(253, 245, 230, 1) 100%
-    ),
-    /* Subtle ink wash texture */
-    url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  opacity: 0.03;
-  mix-blend-mode: multiply;
+      rgba(10, 10, 15, 0.4) 0%,
+      rgba(10, 10, 15, 0.2) 50%,
+      rgba(10, 10, 15, 0.9) 100%
+    );
 }
 
 .hero-content {
@@ -261,305 +208,202 @@ body {
   text-align: center;
   max-width: 800px;
   padding: 0 24px;
-  margin-top: -60px;
-}
-
-/* Chinese Seal Style Badge */
-.hero-badge {
-  display: inline-flex;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  background: rgba(253, 245, 230, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--china-red);
+}
+
+/* Centered Logo Symbol */
+.hero-logo {
   margin-bottom: 32px;
-  border: 2px solid var(--china-red);
+}
+
+.logo-circle {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--china-red), #8B0000);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   box-shadow: 
-    0 2px 8px rgba(196, 30, 58, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  letter-spacing: 2px;
-  text-transform: uppercase;
+    0 0 60px var(--china-red-glow),
+    0 0 120px rgba(230, 57, 70, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.2);
 }
 
-.hero-badge-icon {
-  color: var(--china-gold);
-  font-size: 14px;
+.logo-circle span {
+  font-size: 42px;
+  color: var(--text-primary);
+  font-weight: 900;
 }
 
-/* Chinese Calligraphy Style Title */
+/* Bright White Title */
 .hero-title {
   font-family: var(--font-display);
-  font-size: clamp(48px, 10vw, 88px);
-  font-weight: 500;
-  line-height: 1.15;
-  letter-spacing: 4px;
-  color: var(--china-ink);
-  margin-bottom: 24px;
-  text-shadow: 
-    2px 2px 4px rgba(0, 0, 0, 0.1),
-    0 0 60px rgba(253, 245, 230, 0.8);
-}
-
-.hero-title::after {
-  content: '八字命理';
-  display: block;
-  font-size: 0.4em;
-  letter-spacing: 8px;
-  color: var(--china-red);
-  margin-top: 16px;
+  font-size: clamp(48px, 8vw, 80px);
   font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -1px;
+  color: var(--text-primary);
+  margin-bottom: 24px;
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
+/* Subtitle - Bright but slightly muted */
 .hero-subtitle {
-  font-size: clamp(16px, 2.5vw, 20px);
-  color: var(--mountain-dark);
-  line-height: 1.8;
+  font-size: clamp(17px, 2.5vw, 20px);
+  color: var(--text-secondary);
+  line-height: 1.7;
   margin-bottom: 40px;
-  max-width: 600px;
-  margin-left: auto;
-  margin-right: auto;
-  font-weight: 400;
+  max-width: 560px;
 }
 
+/* Single CTA Button */
 .hero-ctas {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
-  flex-wrap: wrap;
 }
 
-/* Primary CTA - Chinese Red */
 .hero-cta-primary {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 16px 36px;
-  background: linear-gradient(135deg, var(--china-red), var(--china-red-dark));
-  color: var(--color-white);
+  padding: 16px 40px;
+  background: var(--text-primary);
+  color: var(--dark-bg);
   font-size: 16px;
   font-weight: 600;
   text-decoration: none;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-full);
   cursor: pointer;
   transition: all var(--transition-fast);
-  box-shadow: 
-    0 4px 16px rgba(196, 30, 58, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  letter-spacing: 1px;
+  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.3);
 }
 
 .hero-cta-primary:hover {
   transform: translateY(-3px);
-  box-shadow: 
-    0 6px 24px rgba(196, 30, 58, 0.45);
+  box-shadow: 0 8px 30px rgba(255, 255, 255, 0.4);
 }
 
-.hero-cta-primary svg {
-  transition: transform var(--transition-fast);
-}
-
-.hero-cta-primary:hover svg {
-  transform: translateX(4px);
-}
-
-/* Secondary CTA - Gold Border */
-.hero-cta-secondary {
-  display: inline-flex;
-  align-items: center;
-  padding: 16px 36px;
-  background: rgba(253, 245, 230, 0.9);
-  backdrop-filter: blur(10px);
-  color: var(--china-ink);
-  font-size: 16px;
-  font-weight: 600;
-  text-decoration: none;
-  border: 2px solid var(--china-gold);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  letter-spacing: 1px;
-}
-
-.hero-cta-secondary:hover {
-  background: rgba(253, 245, 230, 1);
-  border-color: var(--china-red);
-  color: var(--china-red);
-  transform: translateY(-3px);
-}
-
-/* Scroll Indicator - Chinese Style */
-.hero-scroll {
-  position: absolute;
-  bottom: 40px;
-  left: 50%;
-  transform: translateX(-50%);
+/* Trust Badges */
+.trust-badges {
+  margin-top: 60px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 3px;
+  gap: 16px;
+}
+
+.trust-badges span {
+  font-size: 13px;
+  color: var(--text-muted);
+  letter-spacing: 2px;
   text-transform: uppercase;
-  color: var(--mountain-gray);
-  animation: bounce 2.5s infinite;
 }
 
-.hero-scroll::before {
-  content: ' scroll ';
-  writing-mode: vertical-rl;
-  text-orientation: upright;
-  letter-spacing: 4px;
+.badge-icons {
+  display: flex;
+  gap: 20px;
 }
 
-@keyframes bounce {
-  0%, 100% { transform: translateX(-50%) translateY(0); }
-  50% { transform: translateX(-50%) translateY(-8px); }
+.badge-icons span {
+  font-size: 28px;
+  opacity: 0.7;
+  transition: opacity var(--transition-fast);
+}
+
+.badge-icons span:hover {
+  opacity: 1;
 }
 
 /* ========================================
-   SECTION STYLES
+   SECTION STYLES (Light Background)
    ======================================== */
 
 .section-header {
   text-align: center;
   max-width: 640px;
-  margin: 0 auto 72px;
+  margin: 0 auto 64px;
 }
 
-/* Chinese Seal Badge */
 .section-badge {
   display: inline-block;
   padding: 8px 20px;
-  background: transparent;
+  background: rgba(230, 57, 70, 0.1);
   color: var(--china-red);
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 3px;
+  letter-spacing: 2px;
   text-transform: uppercase;
-  border: 2px solid var(--china-red);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-full);
   margin-bottom: 20px;
 }
 
 .section-title {
   font-family: var(--font-display);
   font-size: clamp(36px, 5vw, 52px);
-  font-weight: 500;
-  letter-spacing: 2px;
-  margin-bottom: 20px;
-  color: var(--china-ink);
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  margin-bottom: 16px;
+  color: var(--light-text);
 }
 
 .section-subtitle {
   font-size: 18px;
-  color: var(--mountain-gray);
-  line-height: 1.7;
+  color: #666;
+  line-height: 1.6;
 }
 
 /* ========================================
-   FEATURES SECTION - Chinese Cards
+   FEATURES SECTION
    ======================================== */
 
 .features-section {
   padding: 120px 0;
-  background: var(--paper-cream);
-  position: relative;
-}
-
-.features-section::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(
-    to right,
-    transparent,
-    rgba(196, 30, 58, 0.3),
-    transparent
-  );
+  background: var(--light-bg);
 }
 
 .features-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-  gap: 28px;
+  gap: 24px;
 }
 
-/* Chinese Scroll Style Cards */
 .feature-card {
-  padding: 48px 36px;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.95),
-    rgba(253, 245, 230, 0.9)
-  );
-  border: 1px solid rgba(139, 69, 19, 0.15);
-  border-radius: var(--radius-sm);
+  padding: 40px 32px;
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: var(--radius-lg);
   text-align: center;
   transition: all var(--transition-base);
-  position: relative;
-  box-shadow: 
-    0 2px 8px rgba(0, 0, 0, 0.04),
-    0 8px 24px rgba(0, 0, 0, 0.06);
-}
-
-.feature-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 20px;
-  right: 20px;
-  height: 3px;
-  background: linear-gradient(
-    to right,
-    transparent,
-    var(--china-red),
-    transparent
-  );
-  opacity: 0;
-  transition: opacity var(--transition-fast);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .feature-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.1),
-    0 16px 48px rgba(0, 0, 0, 0.08);
-  border-color: rgba(196, 30, 58, 0.3);
-}
-
-.feature-card:hover::before {
-  opacity: 1;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  border-color: rgba(230, 57, 70, 0.2);
 }
 
 .feature-icon {
-  font-size: 52px;
-  margin-bottom: 24px;
-  display: block;
+  font-size: 48px;
+  margin-bottom: 20px;
 }
 
 .feature-card h3 {
   font-family: var(--font-display);
-  font-size: 24px;
-  font-weight: 500;
-  margin-bottom: 16px;
-  color: var(--china-ink);
-  letter-spacing: 1px;
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--light-text);
 }
 
 .feature-card p {
   font-size: 15px;
-  color: var(--mountain-gray);
-  line-height: 1.7;
+  color: #666;
+  line-height: 1.6;
 }
 
 /* ========================================
@@ -568,137 +412,90 @@ body {
 
 .how-it-works-section {
   padding: 120px 0;
-  background: linear-gradient(
-    to bottom,
-    var(--paper-cream),
-    rgba(212, 175, 55, 0.05)
-  );
-  position: relative;
-}
-
-.how-it-works-section::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 200px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23FDF5E6' fill-opacity='1' d='M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,154.7C960,171,1056,181,1152,165.3C1248,149,1344,107,1392,85.3L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E") no-repeat bottom;
-  background-size: cover;
-  opacity: 0.5;
+  background: linear-gradient(to bottom, var(--light-bg), #f5f4f2);
 }
 
 .steps-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 36px;
-  position: relative;
-  z-index: 1;
+  gap: 32px;
 }
 
 .step-card {
-  padding: 56px 40px;
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(139, 69, 19, 0.12);
+  padding: 48px 36px;
+  background: white;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(0, 0, 0, 0.06);
   text-align: center;
-  position: relative;
   transition: all var(--transition-base);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
 }
 
 .step-card:hover {
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  border-color: rgba(196, 30, 58, 0.2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
-/* Chinese Number Style */
 .step-number {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
   font-family: var(--font-display);
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--china-red);
-  background: rgba(196, 30, 58, 0.08);
-  border: 2px solid var(--china-red);
+  background: rgba(230, 57, 70, 0.08);
   border-radius: 50%;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
 }
 
 .step-card h3 {
   font-family: var(--font-display);
-  font-size: 26px;
-  font-weight: 500;
-  margin-bottom: 16px;
-  color: var(--china-ink);
-  letter-spacing: 1px;
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--light-text);
 }
 
 .step-card p {
   font-size: 15px;
-  color: var(--mountain-gray);
-  line-height: 1.7;
+  color: #666;
+  line-height: 1.6;
 }
 
 /* ========================================
-   COMING SOON SECTION - Dark Ink
+   COMING SOON SECTION
    ======================================== */
 
 .coming-soon-section {
   padding: 140px 0;
-  background: 
-    linear-gradient(
-      135deg,
-      var(--china-ink) 0%,
-      var(--china-ink-light) 100%
-    );
-  color: var(--color-white);
-  position: relative;
-  overflow: hidden;
-}
-
-.coming-soon-section::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  opacity: 0.05;
+  background: var(--dark-bg);
+  color: var(--text-primary);
 }
 
 .coming-soon-section .section-badge {
-  background: transparent;
+  background: rgba(255, 255, 255, 0.1);
   color: var(--china-gold);
-  border-color: var(--china-gold);
 }
 
 .coming-soon-section .section-title {
-  color: var(--color-white);
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  color: var(--text-primary);
 }
 
 .coming-soon-section .section-subtitle {
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--text-secondary);
 }
 
 .coming-soon-content {
   text-align: center;
   max-width: 600px;
   margin: 0 auto;
-  position: relative;
-  z-index: 1;
 }
 
-/* Chinese Style Input */
 .waitlist-form {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   margin-top: 48px;
   justify-content: center;
   flex-wrap: wrap;
@@ -707,43 +504,40 @@ body {
 .waitlist-form input {
   flex: 1;
   min-width: 300px;
-  max-width: 400px;
-  padding: 18px 28px;
+  max-width: 360px;
+  padding: 16px 24px;
   background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(212, 175, 55, 0.4);
-  border-radius: var(--radius-sm);
-  font-size: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-full);
+  font-size: 15px;
   font-family: inherit;
-  color: var(--color-white);
+  color: var(--text-primary);
   outline: none;
   transition: all var(--transition-fast);
 }
 
 .waitlist-form input::placeholder {
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--text-muted);
 }
 
 .waitlist-form input:focus {
   border-color: var(--china-gold);
   background: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
 }
 
-/* Gold Button */
 .btn-primary {
   display: inline-flex;
   align-items: center;
-  padding: 18px 36px;
-  background: linear-gradient(135deg, var(--china-gold), var(--china-gold-light));
-  color: var(--china-ink);
-  font-size: 16px;
+  padding: 16px 32px;
+  background: var(--china-gold);
+  color: var(--dark-bg);
+  font-size: 15px;
   font-weight: 700;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-full);
   cursor: pointer;
   transition: all var(--transition-fast);
   box-shadow: 0 4px 16px rgba(212, 175, 55, 0.3);
-  letter-spacing: 1px;
 }
 
 .btn-primary:hover {
@@ -755,14 +549,14 @@ body {
   margin-top: 48px;
   padding: 40px;
   background: rgba(0, 168, 107, 0.1);
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(0, 168, 107, 0.3);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(0, 168, 107, 0.2);
 }
 
 .success-message p {
   margin-top: 20px;
   font-size: 18px;
-  color: var(--color-white);
+  color: var(--text-primary);
 }
 
 /* ========================================
@@ -771,30 +565,29 @@ body {
 
 .about-section {
   padding: 120px 0;
-  background: var(--paper-cream);
-  position: relative;
+  background: var(--light-bg);
 }
 
 .about-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 100px;
+  gap: 80px;
   align-items: center;
 }
 
 .about-text p {
   font-size: 17px;
-  color: var(--mountain-gray);
-  line-height: 1.9;
-  margin-bottom: 24px;
+  color: #555;
+  line-height: 1.8;
+  margin-bottom: 20px;
 }
 
 .about-stats {
   display: flex;
-  gap: 56px;
-  margin-top: 48px;
-  padding-top: 48px;
-  border-top: 1px solid rgba(139, 69, 19, 0.15);
+  gap: 48px;
+  margin-top: 40px;
+  padding-top: 40px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .stat {
@@ -804,17 +597,15 @@ body {
 
 .stat-number {
   font-family: var(--font-display);
-  font-size: 42px;
-  font-weight: 500;
+  font-size: 40px;
+  font-weight: 600;
   color: var(--china-red);
-  margin-bottom: 8px;
-  letter-spacing: 2px;
+  margin-bottom: 4px;
 }
 
 .stat-label {
   font-size: 14px;
-  color: var(--mountain-gray);
-  letter-spacing: 1px;
+  color: #666;
 }
 
 .about-image {
@@ -823,111 +614,70 @@ body {
   align-items: center;
 }
 
-/* Chinese Character Display */
 .image-placeholder {
   width: 100%;
   max-width: 380px;
   aspect-ratio: 1;
-  background: 
-    linear-gradient(
-      135deg,
-      rgba(196, 30, 58, 0.08),
-      rgba(212, 175, 55, 0.08)
-    );
-  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, rgba(230, 57, 70, 0.08), rgba(212, 175, 55, 0.08));
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid rgba(196, 30, 58, 0.2);
-  position: relative;
-  box-shadow: 
-    inset 0 0 60px rgba(196, 30, 58, 0.05),
-    0 8px 32px rgba(0, 0, 0, 0.08);
-}
-
-.image-placeholder::before {
-  content: '';
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  right: 20px;
-  bottom: 20px;
-  border: 1px solid rgba(196, 30, 58, 0.15);
-  border-radius: var(--radius-sm);
+  border: 2px solid rgba(230, 57, 70, 0.2);
+  box-shadow: inset 0 0 60px rgba(230, 57, 70, 0.05);
 }
 
 .image-placeholder span {
-  font-size: 140px;
+  font-size: 120px;
   color: var(--china-red);
-  opacity: 0.85;
+  opacity: 0.8;
   font-weight: 900;
-  text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* ========================================
-   FOOTER - Chinese Style
+   FOOTER
    ======================================== */
 
 .footer {
-  padding: 72px 0 40px;
-  background: var(--china-ink);
-  color: var(--color-white);
-  position: relative;
-}
-
-.footer::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(
-    to right,
-    transparent,
-    var(--china-red),
-    var(--china-gold),
-    var(--china-red),
-    transparent
-  );
+  padding: 60px 0 32px;
+  background: var(--dark-bg);
+  color: var(--text-primary);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .footer-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 48px;
+  margin-bottom: 40px;
   flex-wrap: wrap;
-  gap: 32px;
+  gap: 24px;
 }
 
 .footer-logo {
   font-family: var(--font-display);
-  font-size: 28px;
-  font-weight: 500;
+  font-size: 24px;
+  font-weight: 600;
   color: var(--china-gold);
-  letter-spacing: 2px;
 }
 
 .footer-brand p {
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.5);
-  margin-top: 8px;
-  letter-spacing: 1px;
+  color: var(--text-muted);
+  margin-top: 4px;
 }
 
 .footer-links {
   display: flex;
-  gap: 40px;
+  gap: 32px;
 }
 
 .footer-links a {
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--text-secondary);
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
   transition: color var(--transition-fast);
-  letter-spacing: 1px;
 }
 
 .footer-links a:hover {
@@ -935,15 +685,14 @@ body {
 }
 
 .footer-bottom {
-  padding-top: 32px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   text-align: center;
 }
 
 .footer-bottom p {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.4);
-  letter-spacing: 1px;
+  color: var(--text-muted);
 }
 
 /* ========================================
@@ -951,30 +700,29 @@ body {
    ======================================== */
 
 @media (max-width: 768px) {
+  .nav {
+    padding: 16px 20px;
+  }
+  
   .nav-links {
     display: none;
   }
   
   .hero-title {
-    font-size: 42px;
+    font-size: 40px;
   }
   
-  .hero-title::after {
-    font-size: 0.35em;
-    letter-spacing: 4px;
+  .logo-circle {
+    width: 80px;
+    height: 80px;
   }
   
-  .hero-ctas {
-    flex-direction: column;
-    width: 100%;
-    max-width: 300px;
-    margin: 0 auto;
+  .logo-circle span {
+    font-size: 32px;
   }
   
-  .hero-cta-primary,
-  .hero-cta-secondary {
-    width: 100%;
-    justify-content: center;
+  .hero-cta-primary {
+    padding: 14px 32px;
   }
   
   .features-grid,
@@ -982,19 +730,13 @@ body {
     grid-template-columns: 1fr;
   }
   
-  .feature-card,
-  .step-card {
-    padding: 40px 28px;
-  }
-  
   .about-content {
     grid-template-columns: 1fr;
-    gap: 60px;
+    gap: 48px;
   }
   
   .about-stats {
-    gap: 32px;
-    justify-content: center;
+    gap: 24px;
   }
   
   .waitlist-form {
@@ -1005,16 +747,11 @@ body {
   .waitlist-form input {
     width: 100%;
     max-width: 100%;
-    min-width: unset;
   }
   
   .footer-content {
     flex-direction: column;
     text-align: center;
-  }
-  
-  .footer-links {
-    gap: 24px;
   }
 }
 
@@ -1025,12 +762,6 @@ body {
   
   .hero-content {
     padding: 0 20px;
-  }
-  
-  .hero-badge {
-    padding: 8px 16px;
-    font-size: 11px;
-    letter-spacing: 1px;
   }
   
   .features-section,
@@ -1047,11 +778,11 @@ body {
   
   .about-stats {
     flex-direction: column;
-    gap: 24px;
+    gap: 20px;
     text-align: center;
   }
   
   .image-placeholder span {
-    font-size: 100px;
+    font-size: 80px;
   }
 }

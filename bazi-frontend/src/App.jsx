@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import "./App.css";
 
-// Navigation Component
+// Navigation Component - Dark Style
 function Navigation() {
   const [scrolled, setScrolled] = useState(false);
 
@@ -21,7 +21,6 @@ function Navigation() {
           <span className="nav-logo-text">Bazi</span>
         </a>
         <div className="nav-links">
-          <a href="#hero" className="nav-link">Home</a>
           <a href="#features" className="nav-link">Features</a>
           <a href="#how-it-works" className="nav-link">How It Works</a>
           <a href="#about" className="nav-link">About</a>
@@ -32,7 +31,7 @@ function Navigation() {
   );
 }
 
-// Hero Section Component
+// Hero Section - Dark Immersive Style
 function HeroSection() {
   return (
     <section className="hero" id="hero">
@@ -41,35 +40,36 @@ function HeroSection() {
         <div className="hero-bg-overlay" />
       </div>
       <div className="hero-content">
-        <div className="hero-badge">
-          <span className="hero-badge-icon">✦</span>
-          Ancient Wisdom Meets Modern Insight
+        {/* Centered Logo Symbol */}
+        <div className="hero-logo">
+          <div className="logo-circle">
+            <span>八字</span>
+          </div>
         </div>
+        
         <h1 className="hero-title">
           Discover Your Destiny
         </h1>
         <p className="hero-subtitle">
           Explore the ancient art of Chinese metaphysics through your unique birth chart.
-          <br />
           Discover insights about your destiny, career path, and relationships.
         </p>
         <div className="hero-ctas">
           <a href="#coming-soon" className="hero-cta-primary">
             Get Started
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </a>
-          <a href="#about" className="hero-cta-secondary">
-            Learn More
           </a>
         </div>
-      </div>
-      <div className="hero-scroll">
-        <span>Scroll</span>
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M8 3V13M8 13L4 9M8 13L12 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
+        
+        {/* Trust badges */}
+        <div className="trust-badges">
+          <span>Trusted by seekers worldwide</span>
+          <div className="badge-icons">
+            <span>☯️</span>
+            <span>🐉</span>
+            <span>🎋</span>
+            <span>🏔️</span>
+          </div>
+        </div>
       </div>
     </section>
   );
