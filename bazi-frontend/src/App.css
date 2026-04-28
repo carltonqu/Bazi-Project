@@ -517,61 +517,135 @@ body {
 }
 
 /* ========================================
-   HOW IT WORKS SECTION
+   FORTUNE RESULTS SECTION
    ======================================== */
 
-.how-it-works-section {
+.fortune-results-section {
   padding: 120px 0;
-  background: linear-gradient(to bottom, var(--light-bg), #f5f4f2);
+  background: linear-gradient(135deg, var(--light-bg) 0%, #f0f0f0 100%);
 }
 
-.steps-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 32px;
+.results-container {
+  max-width: 1000px;
+  margin: 0 auto;
 }
 
-.step-card {
-  padding: 48px 36px;
+/* Tab Navigation */
+.results-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 40px;
+}
+
+.result-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 24px;
+  background: white;
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  min-width: 100px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.result-tab:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.result-tab.active {
+  border-color: var(--china-red);
+  background: linear-gradient(135deg, rgba(230, 57, 70, 0.05), white);
+}
+
+.tab-icon {
+  font-size: 28px;
+}
+
+.tab-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--light-text);
+  text-align: center;
+}
+
+.result-tab.active .tab-label {
+  color: var(--china-red);
+}
+
+/* Result Content */
+.result-content {
   background: white;
   border-radius: var(--radius-lg);
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  text-align: center;
-  transition: all var(--transition-base);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
 }
 
-.step-card:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+.result-card {
+  padding: 48px;
 }
 
-.step-number {
-  display: inline-flex;
+.result-header {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  width: 52px;
-  height: 52px;
-  font-family: var(--font-display);
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--china-red);
-  background: rgba(230, 57, 70, 0.08);
-  border-radius: 50%;
-  margin-bottom: 24px;
+  gap: 16px;
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 2px solid rgba(230, 57, 70, 0.1);
 }
 
-.step-card h3 {
+.result-icon {
+  font-size: 48px;
+}
+
+.result-header h3 {
   font-family: var(--font-display);
-  font-size: 24px;
+  font-size: 32px;
   font-weight: 600;
-  margin-bottom: 12px;
   color: var(--light-text);
 }
 
-.step-card p {
-  font-size: 15px;
-  color: #666;
-  line-height: 1.6;
+.result-body {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.reading-section h4,
+.advice-section h4 {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+}
+
+.reading-section h4 {
+  color: var(--china-red);
+}
+
+.advice-section h4 {
+  color: #2E7D32;
+}
+
+.reading-section p,
+.advice-section p {
+  font-size: 17px;
+  line-height: 1.8;
+  color: #444;
+}
+
+.advice-section {
+  background: linear-gradient(135deg, rgba(46, 125, 50, 0.05), rgba(46, 125, 50, 0.02));
+  padding: 24px;
+  border-radius: var(--radius-md);
+  border-left: 4px solid #2E7D32;
 }
 
 /* ========================================

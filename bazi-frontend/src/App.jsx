@@ -221,44 +221,108 @@ function FortuneFormSection() {
   );
 }
 
-// How It Works Section
-function HowItWorksSection() {
-  const steps = [
-    {
-      number: "01",
-      title: "Enter Your Details",
-      description: "Share your birth date, time, and location for accurate calculations."
+// Fortune Results Section
+function FortuneResultsSection() {
+  const [activeTab, setActiveTab] = useState("relationship");
+
+  const fortuneData = {
+    relationship: {
+      title: "Relationship",
+      icon: "❤️",
+      reading: "Your Bazi chart indicates strong water elements, suggesting deep emotional connections. You are most compatible with those born in the Year of the Dragon or Monkey. Your ideal partner should have strong earth elements to balance your water nature.",
+      advice: "Focus on building trust through open communication. Avoid relationships with those who have conflicting fire elements."
     },
-    {
-      number: "02",
-      title: "AI Analysis",
-      description: "Our advanced AI interprets your Bazi chart using ancient wisdom."
+    career: {
+      title: "Career",
+      icon: "💼",
+      reading: "Your chart shows a dominant metal element, indicating success in structured environments. Careers in finance, technology, or management will bring you fulfillment. Your leadership qualities will shine in positions of authority.",
+      advice: "Seek opportunities that allow you to organize and structure. Avoid overly creative or chaotic work environments."
     },
-    {
-      number: "03",
-      title: "Get Your Reading",
-      description: "Receive personalized insights and actionable guidance."
+    lifestyle: {
+      title: "Lifestyle",
+      icon: "🌿",
+      reading: "Your wood element suggests a need for growth and expansion. You thrive in environments with nature and greenery. Regular exercise, especially outdoors, will enhance your energy and well-being.",
+      advice: "Incorporate more green spaces into your living environment. Practice meditation near water or trees to balance your energy."
+    },
+    future: {
+      title: "Future",
+      icon: "🔮",
+      reading: "The coming year brings opportunities for transformation. Your luck cycle shows a shift toward prosperity in the autumn months. Major life decisions should be made after careful consideration of your elemental balance.",
+      advice: "Prepare for changes in the coming months. Stay adaptable and embrace new opportunities that align with your core strengths."
+    },
+    problems: {
+      title: "Problems & Solutions",
+      icon: "⚡",
+      reading: "Current challenges stem from an imbalance between your fire and water elements. You may experience stress or conflict in relationships. The solution lies in introducing more earth elements through grounding practices.",
+      advice: "Practice mindfulness and grounding exercises. Wear earth-tone colors and spend time in nature to restore balance."
+    },
+    strengths: {
+      title: "Strengths & Weaknesses",
+      icon: "💪",
+      reading: "Your greatest strength is your adaptability and intuition. You can read situations and people well. However, your weakness is overthinking and indecision when faced with too many options.",
+      advice: "Trust your instincts more. Set clear goals to avoid analysis paralysis. Surround yourself with decisive people who complement your nature."
+    },
+    colors: {
+      title: "Lucky Colors",
+      icon: "🎨",
+      reading: "Your lucky colors are deep blue, emerald green, and silver. These colors enhance your water and metal elements. Avoid excessive red or orange as they may overstimulate your fire element.",
+      advice: "Wear blue or green for important meetings or dates. Use silver accessories to enhance your natural charm and authority."
+    },
+    luck: {
+      title: "Luck Days & Months",
+      icon: "📅",
+      reading: "Your luckiest days are Tuesday and Saturday. The most fortunate months are October and February. During these times, your natural abilities are enhanced and opportunities flow more easily.",
+      advice: "Schedule important events on your lucky days. Use October for career moves and February for relationship developments."
     }
-  ];
+  };
+
+  const tabs = Object.keys(fortuneData);
 
   return (
-    <section className="how-it-works-section" id="how-it-works">
+    <section className="fortune-results-section" id="results">
       <div className="container">
         <div className="section-header">
-          <span className="section-badge">How It Works</span>
-          <h2 className="section-title">Three Simple Steps</h2>
+          <span className="section-badge">Your Fortune Report</span>
+          <h2 className="section-title">Personalized Insights</h2>
           <p className="section-subtitle">
-            Your personalized fortune reading in minutes
+            Comprehensive analysis of your Bazi chart across all life areas
           </p>
         </div>
-        <div className="steps-grid">
-          {steps.map((step, index) => (
-            <div className="step-card" key={index}>
-              <span className="step-number">{step.number}</span>
-              <h3>{step.title}</h3>
-              <p>{step.description}</p>
+
+        <div className="results-container">
+          {/* Tab Navigation */}
+          <div className="results-tabs">
+            {tabs.map((tab) => (
+              <button
+                key={tab}
+                className={`result-tab ${activeTab === tab ? "active" : ""}`}
+                onClick={() => setActiveTab(tab)}
+              >
+                <span className="tab-icon">{fortuneData[tab].icon}</span>
+                <span className="tab-label">{fortuneData[tab].title}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Result Content */}
+          <div className="result-content">
+            <div className="result-card">
+              <div className="result-header">
+                <span className="result-icon">{fortuneData[activeTab].icon}</span>
+                <h3>{fortuneData[activeTab].title}</h3>
+              </div>
+              <div className="result-body">
+                <div className="reading-section">
+                  <h4>Reading</h4>
+                  <p>{fortuneData[activeTab].reading}</p>
+                </div>
+                <div className="advice-section">
+                  <h4>Advice</h4>
+                  <p>{fortuneData[activeTab].advice}</p>
+                </div>
+              </div>
             </div>
-          ))}
+          </div>
         </div>
       </div>
     </section>
@@ -395,7 +459,7 @@ export default function App() {
       <Navigation />
       <HeroSection />
       <FortuneFormSection />
-      <HowItWorksSection />
+      <FortuneResultsSection />
       <ComingSoonSection />
       <AboutSection />
       <Footer />
