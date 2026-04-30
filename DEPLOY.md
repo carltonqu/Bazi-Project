@@ -97,3 +97,4 @@ Update the `FRONTEND_ORIGIN` in your backend Vercel environment variables to mat
 |---------|-------------|
 | Frontend | https://bazi-frontend-xxxxx.vercel.app |
 | Backend | https://bazi-backend-xxxxx.vercel.app |
+# Deploy trigger Thu Apr 30 13:00:33 PST 2026
