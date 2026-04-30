@@ -1,9 +1,15 @@
 import { useState, useEffect } from "react";
+import { Routes, Route, Link, useNavigate } from "react-router-dom";
 import "./App.css";
+import "./pages/Auth.css";
+import AuthModal from "./components/AuthModal";
+import { useAuth } from "./context/AuthContext";
 
 // Navigation Component - Dark Style
-function Navigation() {
+function Navigation({ onLoginClick }) {
   const [scrolled, setScrolled] = useState(false);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -13,31 +19,82 @@ function Navigation() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
   return (
     <nav className={`nav ${scrolled ? "nav-scrolled" : ""}`}>
       <div className="nav-container">
-        <a href="#" className="nav-logo">
+        <Link to="/" className="nav-logo">
           <span className="nav-logo-icon">八字</span>
           <span className="nav-logo-text">Bazi</span>
-        </a>
+        </Link>
         <div className="nav-links">
-          <a href="#features" className="nav-link">Features</a>
-          <a href="#how-it-works" className="nav-link">How It Works</a>
-          <a href="#about" className="nav-link">About</a>
+          <a href="/#features" className="nav-link">Features</a>
+          <a href="/#how-it-works" className="nav-link">How It Works</a>
+          <a href="/#about" className="nav-link">About</a>
         </div>
-        <a href="#coming-soon" className="nav-cta">Get Started</a>
+        {user ? (
+          <div className="nav-user">
+            {user.picture && (
+              <img 
+                src={user.picture} 
+                alt={user.name}
+                className="nav-user-avatar"
+              />
+            )}
+            <span className="nav-user-name">{user.name}</span>
+            <button onClick={handleLogout} className="nav-cta">Logout</button>
+          </div>
+        ) : (
+          <button onClick={onLoginClick} className="nav-cta">Login</button>
+        )}
       </div>
     </nav>
   );
 }
 
 // Hero Section - Dark Immersive Style
-function HeroSection() {
+function HeroSection({ onGetStarted }) {
+  const [hoveredDot, setHoveredDot] = useState(null);
+
+  // Generate random dots for hero section
+  const dots = Array.from({ length: 60 }, (_, i) => ({
+    id: i,
+    left: Math.random() * 100,
+    top: Math.random() * 100,
+    size: Math.random() * 3 + 2,
+    delay: Math.random() * 5,
+    duration: Math.random() * 3 + 4
+  }));
+
   return (
     <section className="hero" id="hero">
       <div className="hero-bg">
         <div className="hero-bg-image" />
         <div className="hero-bg-overlay" />
+
+        {/* Moving dots */}
+        <div className="hero-dots-container">
+          {dots.map((dot) => (
+            <div
+              key={dot.id}
+              className={`hero-dot ${hoveredDot === dot.id ? 'hero-dot-hovered' : ''}`}
+              style={{
+                left: `${dot.left}%`,
+                top: `${dot.top}%`,
+                width: `${dot.size}px`,
+                height: `${dot.size}px`,
+                animationDelay: `${dot.delay}s`,
+                animationDuration: `${dot.duration}s`
+              }}
+              onMouseEnter={() => setHoveredDot(dot.id)}
+              onMouseLeave={() => setHoveredDot(null)}
+            />
+          ))}
+        </div>
       </div>
       <div className="hero-content">
         {/* Centered Logo Symbol */}
@@ -55,9 +112,9 @@ function HeroSection() {
           Discover insights about your destiny, career path, and relationships.
         </p>
         <div className="hero-ctas">
-          <a href="#coming-soon" className="hero-cta-primary">
+          <button onClick={onGetStarted} className="hero-cta-primary">
             Get Started
-          </a>
+          </button>
         </div>
         
         {/* Trust badges */}
@@ -97,6 +154,13 @@ function FortuneFormSection() {
     e.preventDefault();
     setSubmitted(true);
     console.log("Form submitted:", formData);
+    // Scroll to results section after a short delay
+    setTimeout(() => {
+      const resultsSection = document.getElementById('results');
+      if (resultsSection) {
+        resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
   };
 
   const topics = [
@@ -128,18 +192,16 @@ function FortuneFormSection() {
           </div>
         </div>
       ) : (
-        <div className="split-form-container">
-          {/* Left Side - Form */}
-          <div className="form-left-panel">
-            <div className="form-header">
-              <div className="form-logo">
-                <span>八字</span>
-              </div>
-              <h2>Generate Your Report</h2>
-              <p>Enter your birth details to receive your personalized Bazi fortune reading</p>
+        <div className="form-only-container">
+          <div className="form-header-centered">
+            <div className="form-logo-large">
+              <span>八字</span>
             </div>
+            <h2>Generate Your Report</h2>
+            <p>Enter your birth details to receive your personalized Bazi fortune reading</p>
+          </div>
 
-            <form className="split-bazi-form" onSubmit={handleSubmit}>
+          <form className="centered-bazi-form" onSubmit={handleSubmit}>
               <div className="form-row">
                 <div className="form-field">
                   <label htmlFor="name">Full Name *</label>
@@ -245,56 +307,12 @@ function FortuneFormSection() {
                 </div>
               </div>
 
-              <div className="form-submit">
-                <button type="submit" className="btn-generate-split">
+              <div className="form-submit-centered">
+                <button type="submit" className="btn-generate-centered">
                   Generate Fortune Report
                 </button>
               </div>
             </form>
-          </div>
-
-          {/* Right Side - Visual Panel */}
-          <div className="form-right-panel">
-            <div className="right-panel-content">
-              <div className="panel-logo">
-                <span>八字</span>
-              </div>
-              <h3>BAZI FORTUNE</h3>
-              <p className="panel-tagline">Discover your destiny through ancient Chinese wisdom</p>
-              
-              <div className="panel-features">
-                <div className="panel-feature">
-                  <span className="feature-dot"></span>
-                  <span>Personalized birth chart analysis</span>
-                </div>
-                <div className="panel-feature">
-                  <span className="feature-dot"></span>
-                  <span>8 life areas covered</span>
-                </div>
-                <div className="panel-feature">
-                  <span className="feature-dot"></span>
-                  <span>AI-powered insights</span>
-                </div>
-              </div>
-
-              <div className="panel-footer">
-                <div className="panel-stat">
-                  <span className="stat-number">5,000+</span>
-                  <span className="stat-label">Years of Wisdom</span>
-                </div>
-                <div className="panel-stat">
-                  <span className="stat-number">八字</span>
-                  <span className="stat-label">Eight Characters</span>
-                </div>
-              </div>
-            </div>
-            
-            {/* Decorative Elements */}
-            <div className="panel-decoration">
-              <div className="decoration-circle"></div>
-              <div className="decoration-line"></div>
-            </div>
-          </div>
         </div>
       )}
     </section>
@@ -548,6 +566,9 @@ function FortuneResultsSection() {
         <div className="results-split-layout">
           {/* Left Sidebar */}
           <aside className="results-sidebar">
+            <div className="results-sidebar-brand">
+              <span>八字</span>
+            </div>
             <nav className="sidebar-nav">
               {fortuneData.map((item, index) => (
                 <button
@@ -555,7 +576,7 @@ function FortuneResultsSection() {
                   className={`sidebar-item ${activeIndex === index ? "active" : ""}`}
                   onClick={() => setActiveIndex(index)}
                 >
-                  <span className="sidebar-icon">{item.icon}</span>
+                  <span className="sidebar-step-dot">{index + 1}</span>
                   <div className="sidebar-text">
                     <span className="sidebar-title">{item.title}</span>
                     <span className="sidebar-desc">
@@ -569,14 +590,13 @@ function FortuneResultsSection() {
                       {index === 7 && "Timing strategy"}
                     </span>
                   </div>
-                  {activeIndex === index && (
-                    <div className="sidebar-indicator">
-                      <div className="indicator-bar" />
-                    </div>
-                  )}
                 </button>
               ))}
             </nav>
+            <div className="results-sidebar-footer">
+              <span>← Go back</span>
+              <span>Need help?</span>
+            </div>
           </aside>
 
           {/* Right Content Panel */}
@@ -601,39 +621,42 @@ function FortuneResultsSection() {
                 <div className="content-image-overlay" />
               </div>
 
-              {/* Reading Section */}
-              <div className="content-section">
-                <h4 className="section-label reading-label">
-                  <span className="label-dot" />
-                  Reading
-                </h4>
-                <div className="section-body">
-                  {activeItem.reading.map((paragraph, idx) => (
-                    <p key={`reading-${idx}`} className="section-paragraph">{paragraph}</p>
-                  ))}
-                  <ul className="section-list">
-                    {activeItem.readingPoints.map((point, idx) => (
-                      <li key={`reading-point-${idx}`}>{point}</li>
+              {/* Scrollable Content Body */}
+              <div className="content-body-scrollable">
+                {/* Reading Section */}
+                <div className="content-section">
+                  <h4 className="section-label reading-label">
+                    <span className="label-dot" />
+                    Reading
+                  </h4>
+                  <div className="section-body">
+                    {activeItem.reading.map((paragraph, idx) => (
+                      <p key={`reading-${idx}`} className="section-paragraph">{paragraph}</p>
                     ))}
-                  </ul>
+                    <ul className="section-list">
+                      {activeItem.readingPoints.map((point, idx) => (
+                        <li key={`reading-point-${idx}`}>{point}</li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-              </div>
 
-              {/* Advice Section */}
-              <div className="content-section">
-                <h4 className="section-label advice-label">
-                  <span className="label-dot" />
-                  Advice
-                </h4>
-                <div className="section-body">
-                  {activeItem.advice.map((paragraph, idx) => (
-                    <p key={`advice-${idx}`} className="section-paragraph">{paragraph}</p>
-                  ))}
-                  <ul className="section-list">
-                    {activeItem.advicePoints.map((point, idx) => (
-                      <li key={`advice-point-${idx}`}>{point}</li>
+                {/* Advice Section */}
+                <div className="content-section">
+                  <h4 className="section-label advice-label">
+                    <span className="label-dot" />
+                    Advice
+                  </h4>
+                  <div className="section-body">
+                    {activeItem.advice.map((paragraph, idx) => (
+                      <p key={`advice-${idx}`} className="section-paragraph">{paragraph}</p>
                     ))}
-                  </ul>
+                    <ul className="section-list">
+                      {activeItem.advicePoints.map((point, idx) => (
+                        <li key={`advice-point-${idx}`}>{point}</li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
               </div>
 
@@ -643,13 +666,13 @@ function FortuneResultsSection() {
                   className="nav-btn nav-btn-secondary"
                   onClick={() => setActiveIndex(prev => prev === 0 ? fortuneData.length - 1 : prev - 1)}
                 >
-                  ← Previous
+                  Back
                 </button>
                 <button 
                   className="nav-btn nav-btn-primary"
                   onClick={() => setActiveIndex(prev => prev === fortuneData.length - 1 ? 0 : prev + 1)}
                 >
-                  Next →
+                  Continue
                 </button>
               </div>
             </div>
@@ -752,6 +775,86 @@ function AboutSection() {
               <span>八字</span>
             </div>
           </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// Why Decode Ba Zi Section (Cosmic Theme)
+function WhyDecodeBaZiSection() {
+  const features = [
+    {
+      icon: "✦",
+      title: "True Essence",
+      description: "Discover your Day Master. Are you a sturdy Tree or a flickering Candle? Understanding your core element reveals your innate strengths and hidden weaknesses.",
+      highlight: "Day Master"
+    },
+    {
+      icon: "◈",
+      title: "Divine Timing",
+      description: "Time is cyclical. Our Luck Pillars algorithm predicts your 10-year life phases, guiding you on when to strike with boldness and when to conserve energy.",
+      highlight: "Luck Pillars"
+    },
+    {
+      icon: "◉",
+      title: "Wealth Capacity",
+      description: "Unlock your Wealth Potentials. Identify the specific elements and industries that vibrate at your frequency, maximizing your career and financial success.",
+      highlight: "Wealth Potentials"
+    }
+  ];
+
+  return (
+    <section className="why-decode-section" id="why-decode">
+      <div className="cosmic-bg">
+        <div className="stars-container">
+          {Array.from({ length: 100 }).map((_, i) => (
+            <div
+              key={i}
+              className="star"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 3}s`,
+                animationDuration: `${Math.random() * 2 + 2}s`
+              }}
+            />
+          ))}
+        </div>
+      </div>
+      <div className="container">
+        <div className="cosmic-header">
+          <div className="cosmic-divider">
+            <span></span>
+            <div className="cosmic-star">✦</div>
+            <span></span>
+          </div>
+          <div className="cosmic-badge">ANCIENT WISDOM · COSMIC RESONANCE</div>
+          <h2 className="cosmic-title">Why Decode Your Ba Zi?</h2>
+          <p className="cosmic-subtitle">
+            Destiny is the wind; Life is the ship. Knowing the direction of the wind allows you to set your sails correctly.
+          </p>
+        </div>
+        <div className="cosmic-cards">
+          {features.map((feature, index) => (
+            <div className="cosmic-card" key={index}>
+              <div className="cosmic-icon-wrapper">
+                <div className="cosmic-icon-diamond">
+                  <span className="cosmic-icon">{feature.icon}</span>
+                </div>
+                <div className="cosmic-icon-glow"></div>
+              </div>
+              <h3 className="cosmic-card-title">{feature.title}</h3>
+              <p className="cosmic-card-text">
+                {feature.description.split(feature.highlight).map((part, i, arr) => (
+                  <span key={i}>
+                    {part}
+                    {i < arr.length - 1 && <span className="cosmic-highlight">{feature.highlight}</span>}
+                  </span>
+                ))}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
     </section>
@@ -949,19 +1052,62 @@ function FAQSection() {
 }
 
 // CTA Banner Section
-function CTABannerSection() {
+function CTABannerSection({ onGetStarted }) {
+  const [hoveredDot, setHoveredDot] = useState(null);
+  
+  // Generate random dots
+  const dots = Array.from({ length: 50 }, (_, i) => ({
+    id: i,
+    left: Math.random() * 100,
+    top: Math.random() * 100,
+    size: Math.random() * 3 + 2,
+    delay: Math.random() * 5,
+    duration: Math.random() * 3 + 4
+  }));
+
   return (
     <section className="cta-banner-section">
+      {/* Animated Background */}
+      <div className="cta-bg-animation">
+        {/* Gradient overlay */}
+        <div className="cta-gradient-overlay" />
+        
+        {/* Circle lines */}
+        <div className="cta-circle cta-circle-1" />
+        <div className="cta-circle cta-circle-2" />
+        <div className="cta-circle cta-circle-3" />
+        
+        {/* Moving dots */}
+        <div className="cta-dots-container">
+          {dots.map((dot) => (
+            <div
+              key={dot.id}
+              className={`cta-dot ${hoveredDot === dot.id ? 'cta-dot-hovered' : ''}`}
+              style={{
+                left: `${dot.left}%`,
+                top: `${dot.top}%`,
+                width: `${dot.size}px`,
+                height: `${dot.size}px`,
+                animationDelay: `${dot.delay}s`,
+                animationDuration: `${dot.duration}s`
+              }}
+              onMouseEnter={() => setHoveredDot(dot.id)}
+              onMouseLeave={() => setHoveredDot(null)}
+            />
+          ))}
+        </div>
+      </div>
+      
       <div className="container">
         <div className="cta-content">
           <h2>Ready to Discover Your Destiny?</h2>
           <p>Join thousands of seekers who have unlocked their life&apos;s blueprint with our AI-powered Bazi readings.</p>
-          <a href="#features" className="cta-button">
+          <button onClick={onGetStarted} className="cta-button">
             Get Your Free Reading
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
               <path d="M4 10H16M16 10L11 5M16 10L11 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-          </a>
+          </button>
         </div>
       </div>
     </section>
@@ -979,10 +1125,10 @@ function Footer() {
             <p>Ancient wisdom. Modern insight.</p>
           </div>
           <div className="footer-links">
-            <a href="#hero">Home</a>
-            <a href="#features">Features</a>
-            <a href="#how-it-works">How It Works</a>
-            <a href="#about">About</a>
+            <a href="/#hero">Home</a>
+            <a href="/#features">Features</a>
+            <a href="/#how-it-works">How It Works</a>
+            <a href="/#about">About</a>
           </div>
         </div>
         <div className="footer-bottom">
@@ -993,20 +1139,140 @@ function Footer() {
   );
 }
 
-// Main App
-export default function App() {
+// Home Page Component
+function HomePage({ onLoginClick }) {
   return (
     <div className="app">
-      <Navigation />
-      <HeroSection />
+      <Navigation onLoginClick={onLoginClick} />
+      <HeroSection onGetStarted={onLoginClick} />
       <FortuneFormSection />
       <FortuneResultsSection />
+      <WhyDecodeBaZiSection />
       <WhyBaziSection />
       <TestimonialsSection />
       <FAQSection />
-      <CTABannerSection />
+      <CTABannerSection onGetStarted={onLoginClick} />
       <AboutSection />
       <Footer />
     </div>
+  );
+}
+
+// Dashboard Page (placeholder)
+function DashboardPage() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
+  return (
+    <div className="dashboard-page" style={{ 
+      minHeight: '100vh', 
+      background: 'linear-gradient(135deg, #0a0a12 0%, #12121f 50%, #0d0d18 100%)',
+      color: 'white',
+      padding: '40px'
+    }}>
+      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+        <h1 style={{ fontSize: '32px', marginBottom: '24px' }}>Welcome to Your Dashboard</h1>
+        {user && (
+          <div style={{ 
+            background: 'rgba(255,255,255,0.05)', 
+            padding: '24px', 
+            borderRadius: '16px',
+            marginBottom: '24px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
+              {user.picture && (
+                <img 
+                  src={user.picture} 
+                  alt={user.name}
+                  style={{ width: '64px', height: '64px', borderRadius: '50%' }}
+                />
+              )}
+              <div>
+                <h2 style={{ margin: 0 }}>{user.name}</h2>
+                <p style={{ margin: '4px 0 0 0', opacity: 0.6 }}>{user.email}</p>
+              </div>
+            </div>
+          </div>
+        )}
+        <p style={{ opacity: 0.7, marginBottom: '24px' }}>
+          Your Bazi dashboard is coming soon. Here you will be able to view your saved readings, 
+          track your luck cycles, and access personalized recommendations.
+        </p>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <Link 
+            to="/" 
+            style={{
+              padding: '12px 24px',
+              background: 'linear-gradient(135deg, #d4af37 0%, #f59e0b 100%)',
+              color: '#0a0a12',
+              textDecoration: 'none',
+              borderRadius: '10px',
+              fontWeight: '600'
+            }}
+          >
+            Back to Home
+          </Link>
+          <button 
+            onClick={handleLogout}
+            style={{
+              padding: '12px 24px',
+              background: 'transparent',
+              border: '1px solid rgba(255,255,255,0.2)',
+              color: 'white',
+              borderRadius: '10px',
+              cursor: 'pointer'
+            }}
+          >
+            Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Wrapper component to pass props to HomePage
+function HomePageWrapper() {
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState('login');
+
+  const openLogin = () => {
+    setAuthMode('login');
+    setIsAuthModalOpen(true);
+  };
+
+  const openSignup = () => {
+    setAuthMode('signup');
+    setIsAuthModalOpen(true);
+  };
+
+  const closeAuthModal = () => {
+    setIsAuthModalOpen(false);
+  };
+
+  return (
+    <>
+      <HomePage onLoginClick={openLogin} />
+      <AuthModal 
+        isOpen={isAuthModalOpen} 
+        onClose={closeAuthModal} 
+        defaultMode={authMode}
+      />
+    </>
+  );
+}
+
+// Main App with Modal
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<HomePageWrapper />} />
+      <Route path="/dashboard" element={<DashboardPage />} />
+    </Routes>
   );
 }

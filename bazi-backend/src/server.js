@@ -3,16 +3,42 @@ import express from "express";
 import cors from "cors";
 import OpenAI from "openai";
 import { z } from "zod";
+import authRoutes from "./routes/auth.js";
+import { authMiddleware } from "./auth.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Allow multiple origins for CORS
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://bazi-frontend-gray.vercel.app",
+  "https://bazi-frontend-b4xschkld-aidevelopers-projects-a5652f1e.vercel.app",
+];
+
+if (process.env.FRONTEND_ORIGIN) {
+  allowedOrigins.push(process.env.FRONTEND_ORIGIN);
+}
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_ORIGIN || "http://localhost:5173",
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.some(allowed => origin.startsWith(allowed.replace('*.', '')))) {
+        callback(null, true);
+      } else {
+        console.log('CORS blocked origin:', origin);
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
   })
 );
 app.use(express.json({ limit: "1mb" }));
+
+// Auth routes
+app.use("/api/auth", authRoutes);
 
 const FortuneRowSchema = z.object({
   topic: z.string(),
@@ -112,6 +138,14 @@ async function generateFortune(input) {
 
 app.get("/health", (_req, res) => {
   res.json({ ok: true, service: "bazi-backend" });
+});
+
+// Protected route example
+app.get("/api/protected", authMiddleware, (req, res) => {
+  res.json({ 
+    message: "This is a protected route", 
+    user: req.user 
+  });
 });
 
 app.post("/api/fortune", async (req, res) => {

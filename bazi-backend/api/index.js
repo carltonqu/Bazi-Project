@@ -3,10 +3,12 @@ import express from "express";
 import cors from "cors";
 import OpenAI from "openai";
 import { z } from "zod";
+import { OAuth2Client } from "google-auth-library";
+import jwt from "jsonwebtoken";
 
 const app = express();
 
-// CORS configuration - allow all origins for now, restrict in production
+// CORS configuration
 app.use(cors({
   origin: process.env.FRONTEND_ORIGIN || "*",
   methods: ["GET", "POST", "OPTIONS"],
@@ -15,6 +17,115 @@ app.use(cors({
 
 app.use(express.json({ limit: "1mb" }));
 
+// Google OAuth setup
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const JWT_SECRET = process.env.JWT_SECRET || "your-super-secret-jwt-key-change-in-production";
+const oauth2Client = new OAuth2Client(GOOGLE_CLIENT_ID);
+
+// In-memory user store (replace with database in production)
+const users = new Map();
+
+// Auth utilities
+async function verifyGoogleToken(idToken) {
+  if (!GOOGLE_CLIENT_ID) {
+    throw new Error("GOOGLE_CLIENT_ID not configured");
+  }
+
+  const ticket = await oauth2Client.verifyIdToken({
+    idToken,
+    audience: GOOGLE_CLIENT_ID,
+  });
+
+  const payload = ticket.getPayload();
+  
+  return {
+    googleId: payload.sub,
+    email: payload.email,
+    name: payload.name,
+    picture: payload.picture,
+    emailVerified: payload.email_verified,
+  };
+}
+
+async function findOrCreateUser(googleProfile) {
+  let user = users.get(googleProfile.googleId);
+  
+  if (!user) {
+    user = {
+      id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      googleId: googleProfile.googleId,
+      email: googleProfile.email,
+      name: googleProfile.name,
+      picture: googleProfile.picture,
+      createdAt: new Date().toISOString(),
+      lastLogin: new Date().toISOString(),
+    };
+    users.set(googleProfile.googleId, user);
+  } else {
+    user.lastLogin = new Date().toISOString();
+    user.picture = googleProfile.picture;
+  }
+  
+  return user;
+}
+
+function generateToken(user) {
+  return jwt.sign(
+    {
+      userId: user.id,
+      email: user.email,
+      name: user.name,
+    },
+    JWT_SECRET,
+    { expiresIn: "7d" }
+  );
+}
+
+// Auth Routes
+app.post("/api/auth/google", async (req, res) => {
+  try {
+    const { idToken } = req.body;
+
+    if (!idToken) {
+      return res.status(400).json({ message: "ID token is required" });
+    }
+
+    const googleProfile = await verifyGoogleToken(idToken);
+
+    if (!googleProfile.emailVerified) {
+      return res.status(400).json({ message: "Email not verified with Google" });
+    }
+
+    const user = await findOrCreateUser(googleProfile);
+    const token = generateToken(user);
+
+    res.json({
+      success: true,
+      message: user.createdAt === user.lastLogin 
+        ? "Account created successfully" 
+        : "Login successful",
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        picture: user.picture,
+      },
+      token,
+    });
+  } catch (error) {
+    console.error("Google auth error:", error);
+    res.status(500).json({
+      message: "Authentication failed",
+      error: error.message,
+    });
+  }
+});
+
+app.post("/api/auth/logout", (req, res) => {
+  res.json({ success: true, message: "Logged out successfully" });
+});
+
+// Fortune schemas
 const FortuneRowSchema = z.object({
   topic: z.string(),
   reading: z.string(),
@@ -112,7 +223,7 @@ async function generateFortune(input) {
 }
 
 // Health check endpoint
-app.get("/health", (_req, res) => {
+app.get("/api/health", (_req, res) => {
   res.json({ ok: true, service: "bazi-backend", timestamp: new Date().toISOString() });
 });
 
