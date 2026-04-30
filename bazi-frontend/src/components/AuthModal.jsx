@@ -1,13 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import GoogleSignInButton from './GoogleSignInButton';
 
 function AuthModal({ isOpen, onClose, defaultMode = 'login' }) {
   const [mode, setMode] = useState(defaultMode); // 'login' or 'signup'
-  const [step, setStep] = useState(1);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { handleGoogleSignIn } = useAuth();
+  const { login, signup } = useAuth();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -20,7 +18,6 @@ function AuthModal({ isOpen, onClose, defaultMode = 'login' }) {
   useEffect(() => {
     if (isOpen) {
       setMode(defaultMode);
-      setStep(1);
       setError(null);
       setFormData({ name: '', email: '', password: '', confirmPassword: '' });
     }
@@ -50,34 +47,46 @@ function AuthModal({ isOpen, onClose, defaultMode = 'login' }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
     setIsLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
+
+    // Validation
+    if (mode === 'signup') {
+      if (!formData.name.trim()) {
+        setError('Please enter your name');
+        setIsLoading(false);
+        return;
+      }
+      if (formData.password !== formData.confirmPassword) {
+        setError('Passwords do not match');
+        setIsLoading(false);
+        return;
+      }
+      if (formData.password.length < 6) {
+        setError('Password must be at least 6 characters');
+        setIsLoading(false);
+        return;
+      }
+    }
+
+    let result;
+    if (mode === 'login') {
+      result = await login(formData.email, formData.password);
+    } else {
+      result = await signup(formData.name, formData.email, formData.password);
+    }
+
+    setIsLoading(false);
+
+    if (result.success) {
       onClose();
-    }, 1500);
-  };
-
-  const handleGoogleSuccess = () => {
-    onClose();
-  };
-
-  const handleGoogleError = (err) => {
-    setError(err);
-  };
-
-  const nextStep = () => {
-    if (step < 3) setStep(step + 1);
-  };
-
-  const prevStep = () => {
-    if (step > 1) setStep(step - 1);
+    } else {
+      setError(result.error || 'Authentication failed. Please try again.');
+    }
   };
 
   const switchMode = () => {
     setMode(mode === 'login' ? 'signup' : 'login');
-    setStep(1);
     setError(null);
     setFormData({ name: '', email: '', password: '', confirmPassword: '' });
   };
@@ -122,20 +131,9 @@ function AuthModal({ isOpen, onClose, defaultMode = 'login' }) {
           </div>
         )}
 
-        {/* Google Sign In */}
-        <GoogleSignInButton 
-          text={mode === 'login' ? 'signin_with' : 'signup_with'}
-          onSuccess={handleGoogleSuccess}
-          onError={handleGoogleError}
-        />
-
-        <div className="auth-divider">
-          <span>or continue with email</span>
-        </div>
-
         {/* Form */}
         <form className="auth-form" onSubmit={handleSubmit}>
-          {mode === 'signup' && step === 1 && (
+          {mode === 'signup' && (
             <div className="auth-field">
               <label htmlFor="modal-name">Full Name</label>
               <div className="auth-input-wrapper">
@@ -185,11 +183,32 @@ function AuthModal({ isOpen, onClose, defaultMode = 'login' }) {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                placeholder={mode === 'login' ? 'Enter your password' : 'Create a password'}
+                placeholder={mode === 'login' ? 'Enter your password' : 'Create a password (min 6 chars)'}
                 required
+                minLength={6}
               />
             </div>
           </div>
+
+          {mode === 'signup' && (
+            <div className="auth-field">
+              <label htmlFor="modal-confirm-password">Confirm Password</label>
+              <div className="auth-input-wrapper">
+                <svg className="auth-input-icon" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path d="M10 12V14M5 8H15C16.1 8 17 8.9 17 10V16C17 17.1 16.1 18 15 18H5C3.9 18 3 17.1 3 16V10C3 8.9 3.9 8 5 8ZM7 8V6C7 4.3 8.3 3 10 3C11.7 3 13 4.3 13 6V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <input
+                  type="password"
+                  id="modal-confirm-password"
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  placeholder="Confirm your password"
+                  required
+                />
+              </div>
+            </div>
+          )}
 
           {mode === 'login' && (
             <div className="auth-options">

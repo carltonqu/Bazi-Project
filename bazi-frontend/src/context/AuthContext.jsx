@@ -26,25 +26,25 @@ export function AuthProvider({ children }) {
   }, []);
 
   /**
-   * Handle Google Sign-In
+   * Handle Email/Password Login
    */
-  const handleGoogleSignIn = async (googleCredential) => {
+  const login = async (email, password) => {
     try {
       setError(null);
       setLoading(true);
 
-      const response = await fetch(`${API_BASE_URL}/api/auth/google`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ idToken: googleCredential }),
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Authentication failed');
+        throw new Error(data.message || 'Login failed');
       }
 
       // Save auth data
@@ -53,7 +53,44 @@ export function AuthProvider({ children }) {
       
       setUser(data.user);
       
-      return { success: true, isNewUser: data.message.includes('created') };
+      return { success: true };
+    } catch (err) {
+      setError(err.message);
+      return { success: false, error: err.message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * Handle Email/Password Signup
+   */
+  const signup = async (name, email, password) => {
+    try {
+      setError(null);
+      setLoading(true);
+
+      const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Signup failed');
+      }
+
+      // Save auth data
+      localStorage.setItem('bazi_token', data.token);
+      localStorage.setItem('bazi_user', JSON.stringify(data.user));
+      
+      setUser(data.user);
+      
+      return { success: true, isNewUser: true };
     } catch (err) {
       setError(err.message);
       return { success: false, error: err.message };
@@ -128,7 +165,8 @@ export function AuthProvider({ children }) {
     loading,
     error,
     isAuthenticated: !!user,
-    handleGoogleSignIn,
+    login,
+    signup,
     logout,
     getToken,
     authFetch,
