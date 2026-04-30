@@ -11,10 +11,17 @@ function GoogleSignInButton({ onSuccess, onError, text = 'signin_with' }) {
     // Prevent double render in React StrictMode
     if (isRendered.current) return;
     
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    let clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    
+    // Trim whitespace and newlines that might have been added
+    if (clientId) {
+      clientId = clientId.trim();
+    }
     
     console.log('🔐 Google Sign-In Debug:');
-    console.log('  - Client ID:', clientId ? `${clientId.substring(0, 20)}...` : 'MISSING');
+    console.log('  - Raw Client ID:', import.meta.env.VITE_GOOGLE_CLIENT_ID ? 'Present' : 'MISSING');
+    console.log('  - Trimmed Client ID:', clientId ? `${clientId.substring(0, 30)}...` : 'MISSING');
+    console.log('  - Client ID length:', clientId ? clientId.length : 0);
     console.log('  - Current origin:', window.location.origin);
     console.log('  - Hostname:', window.location.hostname);
     
@@ -27,9 +34,14 @@ function GoogleSignInButton({ onSuccess, onError, text = 'signin_with' }) {
     }
 
     // Validate Client ID format
-    if (!clientId.endsWith('.apps.googleusercontent.com')) {
-      const errorMsg = 'Invalid Client ID format. Should end with .apps.googleusercontent.com';
+    const expectedSuffix = '.apps.googleusercontent.com';
+    console.log('  - Ends with correct suffix:', clientId.endsWith(expectedSuffix));
+    console.log('  - Actual ending:', clientId.slice(-30));
+    
+    if (!clientId.endsWith(expectedSuffix)) {
+      const errorMsg = `Invalid Client ID format. Should end with ${expectedSuffix}`;
       console.error('❌', errorMsg);
+      console.error('   Actual value:', JSON.stringify(clientId));
       setInitError(errorMsg);
       if (onError) onError(errorMsg);
       return;
