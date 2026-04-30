@@ -110,6 +110,15 @@ app.post("/api/auth/google", async (req, res) => {
       return res.status(400).json({ message: "ID token is required" });
     }
 
+    // Check if GOOGLE_CLIENT_ID is configured
+    if (!GOOGLE_CLIENT_ID) {
+      console.error("GOOGLE_CLIENT_ID environment variable is not set");
+      return res.status(500).json({ 
+        message: "Server configuration error: GOOGLE_CLIENT_ID not configured",
+        error: "Missing GOOGLE_CLIENT_ID environment variable"
+      });
+    }
+
     const googleProfile = await verifyGoogleToken(idToken);
 
     if (!googleProfile.emailVerified) {
@@ -244,7 +253,15 @@ async function generateFortune(input) {
 
 // Health check endpoint
 app.get("/api/health", (_req, res) => {
-  res.json({ ok: true, service: "bazi-backend", timestamp: new Date().toISOString() });
+  res.json({ 
+    ok: true, 
+    service: "bazi-backend", 
+    timestamp: new Date().toISOString(),
+    config: {
+      googleClientIdConfigured: !!GOOGLE_CLIENT_ID,
+      jwtSecretConfigured: JWT_SECRET !== "your-super-secret-jwt-key-change-in-production"
+    }
+  });
 });
 
 // Fortune generation endpoint

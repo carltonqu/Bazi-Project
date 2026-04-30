@@ -15,6 +15,15 @@ router.post("/google", async (req, res) => {
       return res.status(400).json({ message: "ID token is required" });
     }
 
+    // Check if GOOGLE_CLIENT_ID is configured
+    if (!process.env.GOOGLE_CLIENT_ID) {
+      console.error("GOOGLE_CLIENT_ID environment variable is not set");
+      return res.status(500).json({
+        message: "Server configuration error: GOOGLE_CLIENT_ID not configured",
+        error: "Missing GOOGLE_CLIENT_ID environment variable"
+      });
+    }
+
     // Verify Google token
     const googleProfile = await verifyGoogleToken(idToken);
 
