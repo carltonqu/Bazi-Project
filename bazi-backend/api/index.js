@@ -8,11 +8,31 @@ import jwt from "jsonwebtoken";
 
 const app = express();
 
-// CORS configuration
+// CORS configuration - allow multiple origins
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://bazi-frontend-gray.vercel.app",
+  "https://bazi-frontend-itmuyfxq8-aidevelopers-projects-a5652f1e.vercel.app",
+];
+
+if (process.env.FRONTEND_ORIGIN) {
+  allowedOrigins.push(process.env.FRONTEND_ORIGIN);
+}
+
 app.use(cors({
-  origin: process.env.FRONTEND_ORIGIN || "*",
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ["GET", "POST", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
 }));
 
 app.use(express.json({ limit: "1mb" }));
