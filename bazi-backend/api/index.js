@@ -5,6 +5,8 @@ import OpenAI from "openai";
 import { z } from "zod";
 import { OAuth2Client } from "google-auth-library";
 import jwt from "jsonwebtoken";
+import { connectDB } from "../lib/db.js";
+import { User } from "../models/User.js";
 
 const app = express();
 
@@ -44,9 +46,6 @@ const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const JWT_SECRET = process.env.JWT_SECRET || "your-super-secret-jwt-key-change-in-production";
 const oauth2Client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
-// In-memory user store (replace with database in production)
-const users = new Map();
-
 // Auth utilities
 async function verifyGoogleToken(idToken) {
   if (!GOOGLE_CLIENT_ID) {
@@ -69,32 +68,10 @@ async function verifyGoogleToken(idToken) {
   };
 }
 
-async function findOrCreateUser(googleProfile) {
-  let user = users.get(googleProfile.googleId);
-  
-  if (!user) {
-    user = {
-      id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      googleId: googleProfile.googleId,
-      email: googleProfile.email,
-      name: googleProfile.name,
-      picture: googleProfile.picture,
-      createdAt: new Date().toISOString(),
-      lastLogin: new Date().toISOString(),
-    };
-    users.set(googleProfile.googleId, user);
-  } else {
-    user.lastLogin = new Date().toISOString();
-    user.picture = googleProfile.picture;
-  }
-  
-  return user;
-}
-
 function generateToken(user) {
   return jwt.sign(
     {
-      userId: user.id,
+      userId: user._id ? user._id.toString() : user.id,
       email: user.email,
       name: user.name,
     },
@@ -112,7 +89,6 @@ app.post("/api/auth/google", async (req, res) => {
       return res.status(400).json({ message: "ID token is required" });
     }
 
-    // Check if GOOGLE_CLIENT_ID is configured
     if (!GOOGLE_CLIENT_ID) {
       console.error("GOOGLE_CLIENT_ID environment variable is not set");
       return res.status(500).json({ 
@@ -127,16 +103,47 @@ app.post("/api/auth/google", async (req, res) => {
       return res.status(400).json({ message: "Email not verified with Google" });
     }
 
-    const user = await findOrCreateUser(googleProfile);
+    // Connect to DB
+    await connectDB();
+
+    // Find or create user
+    let user = await User.findOne({ googleId: googleProfile.googleId });
+    const isNewUser = !user;
+
+    if (!user) {
+      // Check if email already exists
+      const existingUser = await User.findOne({ email: googleProfile.email.toLowerCase() });
+      if (existingUser) {
+        // Link Google account to existing email account
+        existingUser.googleId = googleProfile.googleId;
+        existingUser.picture = googleProfile.picture;
+        existingUser.lastLogin = new Date();
+        await existingUser.save();
+        user = existingUser;
+      } else {
+        // Create new user
+        user = new User({
+          googleId: googleProfile.googleId,
+          email: googleProfile.email.toLowerCase(),
+          name: googleProfile.name,
+          picture: googleProfile.picture,
+          lastLogin: new Date()
+        });
+        await user.save();
+      }
+    } else {
+      user.lastLogin = new Date();
+      user.picture = googleProfile.picture;
+      await user.save();
+    }
+
     const token = generateToken(user);
 
     res.json({
       success: true,
-      message: user.createdAt === user.lastLogin 
-        ? "Account created successfully" 
-        : "Login successful",
+      message: isNewUser ? "Account created successfully" : "Login successful",
       user: {
-        id: user.id,
+        id: user._id.toString(),
         email: user.email,
         name: user.name,
         picture: user.picture,
@@ -165,24 +172,24 @@ app.post("/api/auth/login", async (req, res) => {
       return res.status(400).json({ message: "Email and password are required" });
     }
 
-    // Find user by email (check both email and googleId keys for now)
-    let user = null;
-    for (const [key, u] of users.entries()) {
-      if (u.email === email.toLowerCase()) {
-        user = u;
-        break;
-      }
-    }
+    // Connect to DB
+    await connectDB();
 
-    if (!user) {
+    // Find user by email
+    const user = await User.findOne({ email: email.toLowerCase() });
+
+    if (!user || !user.password) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    // For now, simple password check (in production, use bcrypt)
-    // Users created via signup will have a password field
-    if (!user.password || user.password !== password) {
+    // Check password (plain text for now - should use bcrypt in production)
+    if (user.password !== password) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
+
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
 
     const token = generateToken(user);
 
@@ -190,7 +197,7 @@ app.post("/api/auth/login", async (req, res) => {
       success: true,
       message: "Login successful",
       user: {
-        id: user.id,
+        id: user._id.toString(),
         email: user.email,
         name: user.name,
         picture: user.picture,
@@ -219,26 +226,24 @@ app.post("/api/auth/signup", async (req, res) => {
       return res.status(400).json({ message: "Password must be at least 6 characters" });
     }
 
+    // Connect to DB
+    await connectDB();
+
     // Check if user already exists
-    for (const [key, u] of users.entries()) {
-      if (u.email === email.toLowerCase()) {
-        return res.status(409).json({ message: "Email already registered" });
-      }
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (existingUser) {
+      return res.status(409).json({ message: "Email already registered" });
     }
 
     // Create new user
-    const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const user = {
-      id: userId,
+    const user = new User({
       email: email.toLowerCase(),
       name: name,
       password: password, // In production, hash this with bcrypt
-      picture: null,
-      createdAt: new Date().toISOString(),
-      lastLogin: new Date().toISOString(),
-    };
+      lastLogin: new Date()
+    });
 
-    users.set(userId, user);
+    await user.save();
 
     const token = generateToken(user);
 
@@ -246,7 +251,7 @@ app.post("/api/auth/signup", async (req, res) => {
       success: true,
       message: "Account created successfully",
       user: {
-        id: user.id,
+        id: user._id.toString(),
         email: user.email,
         name: user.name,
         picture: user.picture,
@@ -365,6 +370,7 @@ app.get("/", (_req, res) => {
     service: "bazi-backend",
     status: "running",
     version: "1.0.0",
+    database: process.env.MONGODB_URI ? "connected" : "not configured",
     endpoints: {
       health: "/api/health",
       auth: {
@@ -379,16 +385,31 @@ app.get("/", (_req, res) => {
 });
 
 // Health check endpoint
-app.get("/api/health", (_req, res) => {
-  res.json({ 
-    ok: true, 
-    service: "bazi-backend", 
-    timestamp: new Date().toISOString(),
-    config: {
-      googleClientIdConfigured: !!GOOGLE_CLIENT_ID,
-      jwtSecretConfigured: JWT_SECRET !== "your-super-secret-jwt-key-change-in-production"
-    }
-  });
+app.get("/api/health", async (_req, res) => {
+  try {
+    await connectDB();
+    res.json({ 
+      ok: true, 
+      service: "bazi-backend", 
+      timestamp: new Date().toISOString(),
+      database: process.env.MONGODB_URI ? "connected" : "not configured",
+      config: {
+        googleClientIdConfigured: !!GOOGLE_CLIENT_ID,
+        jwtSecretConfigured: JWT_SECRET !== "your-super-secret-jwt-key-change-in-production"
+      }
+    });
+  } catch (error) {
+    res.json({ 
+      ok: true, 
+      service: "bazi-backend", 
+      timestamp: new Date().toISOString(),
+      database: "error: " + error.message,
+      config: {
+        googleClientIdConfigured: !!GOOGLE_CLIENT_ID,
+        jwtSecretConfigured: JWT_SECRET !== "your-super-secret-jwt-key-change-in-production"
+      }
+    });
+  }
 });
 
 // Fortune generation endpoint
@@ -416,6 +437,7 @@ app.post("/api/fortune", async (req, res) => {
 app.get("/api/debug", async (req, res) => {
   res.json({
     timestamp: new Date().toISOString(),
+    database: process.env.MONGODB_URI ? "configured" : "not configured",
     environment: {
       GOOGLE_CLIENT_ID: {
         present: !!GOOGLE_CLIENT_ID,
