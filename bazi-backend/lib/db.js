@@ -23,22 +23,21 @@ export async function connectDB() {
 
   if (!cached.promise) {
     const opts = {
-      bufferCommands: false,
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000,
     };
 
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
       console.log('MongoDB connected successfully');
       return mongoose;
+    }).catch((err) => {
+      console.error('MongoDB connection error:', err.message);
+      cached.promise = null;
+      throw err;
     });
   }
 
-  try {
-    cached.conn = await cached.promise;
-  } catch (e) {
-    cached.promise = null;
-    console.error('MongoDB connection error:', e.message);
-    return null;
-  }
-
+  cached.conn = await cached.promise;
   return cached.conn;
 }
