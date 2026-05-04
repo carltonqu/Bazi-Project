@@ -359,6 +359,25 @@ async function generateFortune(input) {
   return validated;
 }
 
+// Root route
+app.get("/", (_req, res) => {
+  res.json({
+    service: "bazi-backend",
+    status: "running",
+    version: "1.0.0",
+    endpoints: {
+      health: "/api/health",
+      auth: {
+        login: "POST /api/auth/login",
+        signup: "POST /api/auth/signup",
+        logout: "POST /api/auth/logout",
+        google: "POST /api/auth/google"
+      },
+      fortune: "POST /api/fortune"
+    }
+  });
+});
+
 // Health check endpoint
 app.get("/api/health", (_req, res) => {
   res.json({ 
