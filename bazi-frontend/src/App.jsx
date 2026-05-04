@@ -4,6 +4,7 @@ import "./App.css";
 import "./pages/Auth.css";
 import AuthModal from "./components/AuthModal";
 import { useAuth } from "./context/AuthContext";
+import { API_BASE_URL } from "./config";
 
 // Navigation Component - Dark Style
 function Navigation({ onLoginClick }) {
@@ -133,7 +134,7 @@ function HeroSection({ onGetStarted }) {
 }
 
 // Bazi Fortune Form Section - Split Screen Design
-function FortuneFormSection() {
+function FortuneFormSection({ onFortuneGenerated }) {
   const [formData, setFormData] = useState({
     name: "",
     birthDate: "",
@@ -144,23 +145,71 @@ function FortuneFormSection() {
     lifeProblem: ""
   });
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitted(true);
-    console.log("Form submitted:", formData);
-    // Scroll to results section after a short delay
-    setTimeout(() => {
-      const resultsSection = document.getElementById('results');
-      if (resultsSection) {
-        resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Prepare data for API
+      const birthDateObj = new Date(formData.birthDate);
+      const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const birthWeekday = weekdays[birthDateObj.getDay()];
+
+      const apiData = {
+        name: formData.name,
+        birthDate: formData.birthDate,
+        birthTime: formData.birthTime,
+        birthLocation: formData.birthLocation,
+        currentAddress: formData.birthLocation, // Using birth location as current address
+        jobPosition: formData.topic, // Using topic as job position for context
+        gender: formData.gender,
+        lifeProblem: formData.lifeProblem,
+        birthWeekday: birthWeekday
+      };
+
+      // Call backend API
+      const response = await fetch(`${API_BASE_URL}/api/fortune`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(apiData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate fortune');
       }
-    }, 100);
+
+      const fortuneData = await response.json();
+      
+      // Pass generated fortune to parent component
+      if (onFortuneGenerated) {
+        onFortuneGenerated(fortuneData);
+      }
+
+      // Scroll to results section
+      setTimeout(() => {
+        const resultsSection = document.getElementById('results');
+        if (resultsSection) {
+          resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    } catch (err) {
+      console.error('Error generating fortune:', err);
+      setError('Failed to generate fortune. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const topics = [
@@ -180,15 +229,48 @@ function FortuneFormSection() {
       {submitted ? (
         <div className="container">
           <div className="form-success">
-            <div className="success-icon">✦</div>
-            <h3>Your Fortune Report is Being Generated</h3>
-            <p>We&apos;re analyzing your birth chart using ancient Chinese metaphysics. Your personalized report will be ready shortly.</p>
-            <button 
-              className="btn-secondary" 
-              onClick={() => setSubmitted(false)}
-            >
-              Generate Another Report
-            </button>
+            {loading ? (
+              <>
+                <div className="success-icon">✦</div>
+                <h3>Your Fortune Report is Being Generated</h3>
+                <p>We&apos;re analyzing your birth chart using ancient Chinese metaphysics and AI. Your personalized report will be ready shortly.</p>
+                <div className="loading-spinner" style={{ marginTop: '20px' }}>
+                  <div className="spinner" style={{
+                    width: '40px',
+                    height: '40px',
+                    border: '3px solid rgba(212, 175, 55, 0.3)',
+                    borderTop: '3px solid #d4af37',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
+                    margin: '0 auto'
+                  }}></div>
+                </div>
+              </>
+            ) : error ? (
+              <>
+                <div className="success-icon" style={{ color: '#ef4444' }}>✕</div>
+                <h3>Error Generating Report</h3>
+                <p>{error}</p>
+                <button 
+                  className="btn-secondary" 
+                  onClick={() => { setSubmitted(false); setError(null); }}
+                >
+                  Try Again
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="success-icon">✓</div>
+                <h3>Your Fortune Report is Ready!</h3>
+                <p>Scroll down to view your personalized Bazi fortune reading.</p>
+                <button 
+                  className="btn-secondary" 
+                  onClick={() => setSubmitted(false)}
+                >
+                  Generate Another Report
+                </button>
+              </>
+            )}
           </div>
         </div>
       ) : (
@@ -320,10 +402,11 @@ function FortuneFormSection() {
 }
 
 // Fortune Results Section
-function FortuneResultsSection() {
+function FortuneResultsSection({ generatedFortune }) {
   const [activeIndex, setActiveIndex] = useState(0);
 
-  const fortuneData = [
+  // Default static fortune data (shown before AI generation)
+  const defaultFortuneData = [
     {
       key: "relationship",
       title: "Relationship",
@@ -550,6 +633,138 @@ function FortuneResultsSection() {
     }
   ];
 
+  // Transform AI-generated fortune data to match UI format
+  const transformAIFortune = (aiData) => {
+    if (!aiData || !aiData.categories) return null;
+    
+    const categoryMap = {
+      aboutMyself: { key: "strengths", title: "Strengths & Weaknesses", icon: "💪", image: "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=800&q=80" },
+      career: { key: "career", title: "Career", icon: "💼", image: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80" },
+      relationships: { key: "relationship", title: "Relationship", icon: "❤️", image: "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=800&q=80" },
+      business: { key: "future", title: "Future", icon: "🔮", image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&q=80" },
+      lifeGoals: { key: "lifestyle", title: "Lifestyle", icon: "🌿", image: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80" }
+    };
+
+    const transformed = [];
+    
+    Object.entries(aiData.categories).forEach(([category, items]) => {
+      const mapping = categoryMap[category];
+      if (mapping && items && items.length > 0) {
+        // Extract reading and advice from AI response
+        const reading = items.map(item => `${item.topic}: ${item.reading}`);
+        const readingPoints = items.map(item => item.topic);
+        const advice = items.map(item => item.advice);
+        const advicePoints = items.map(item => `Focus on: ${item.topic}`);
+
+        transformed.push({
+          key: mapping.key,
+          title: mapping.title,
+          icon: mapping.icon,
+          image: mapping.image,
+          reading,
+          readingPoints,
+          advice,
+          advicePoints
+        });
+      }
+    });
+
+    // Add additional static sections if needed
+    if (transformed.length < 8) {
+      const additionalSections = [
+        {
+          key: "problems",
+          title: "Problems & Solutions",
+          icon: "⚡",
+          image: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80",
+          reading: [
+            "Your chart reveals specific challenges that may arise in your life path.",
+            "Understanding these patterns helps you prepare and respond effectively.",
+            "Awareness is the first step toward transformation and growth."
+          ],
+          readingPoints: [
+            "Identify recurring patterns",
+            "Recognize early warning signs",
+            "Develop proactive strategies"
+          ],
+          advice: [
+            "When facing challenges, pause and reflect before reacting.",
+            "Seek support from trusted friends or mentors during difficult times.",
+            "Use setbacks as opportunities for learning and growth."
+          ],
+          advicePoints: [
+            "Practice mindful response",
+            "Build a support network",
+            "Embrace growth mindset"
+          ]
+        },
+        {
+          key: "colors",
+          title: "Lucky Colors",
+          icon: "🎨",
+          image: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=800&q=80",
+          reading: [
+            "Your elemental composition suggests colors that enhance your energy.",
+            "Wearing or surrounding yourself with these colors can improve your mood and outcomes.",
+            "Colors work subtly but consistently to align your environment with your nature."
+          ],
+          readingPoints: [
+            "Enhance personal energy",
+            "Improve environmental harmony",
+            "Boost confidence and clarity"
+          ],
+          advice: [
+            "Incorporate your lucky colors in your wardrobe for important occasions.",
+            "Use these colors in your workspace to enhance productivity.",
+            "Surround yourself with these colors during meditation or reflection."
+          ],
+          advicePoints: [
+            "Wear for important events",
+            "Decorate your workspace",
+            "Use in personal rituals"
+          ]
+        },
+        {
+          key: "luck",
+          title: "Luck Days & Months",
+          icon: "📅",
+          image: "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=800&q=80",
+          reading: [
+            "Your Bazi chart reveals favorable timing for different activities.",
+            "Certain periods are more conducive to starting new ventures or making decisions.",
+            "Understanding your luck cycles helps you plan and maximize opportunities."
+          ],
+          readingPoints: [
+            "Identify favorable periods",
+            "Plan important activities",
+            "Navigate challenging times"
+          ],
+          advice: [
+            "Schedule important meetings and launches during your strong periods.",
+            "Use quieter periods for reflection, planning, and maintenance.",
+            "Keep a journal to track how timing affects your outcomes."
+          ],
+          advicePoints: [
+            "Time important decisions well",
+            "Respect natural cycles",
+            "Track and learn from patterns"
+          ]
+        }
+      ];
+
+      // Add missing sections
+      for (const section of additionalSections) {
+        if (!transformed.find(t => t.key === section.key)) {
+          transformed.push(section);
+        }
+      }
+    }
+
+    return transformed;
+  };
+
+  // Use AI-generated data if available, otherwise use default
+  const fortuneData = generatedFortune ? transformAIFortune(generatedFortune) : defaultFortuneData;
   const activeItem = fortuneData[activeIndex];
 
   return (
@@ -1141,12 +1356,18 @@ function Footer() {
 
 // Home Page Component
 function HomePage({ onLoginClick }) {
+  const [generatedFortune, setGeneratedFortune] = useState(null);
+
+  const handleFortuneGenerated = (fortuneData) => {
+    setGeneratedFortune(fortuneData);
+  };
+
   return (
     <div className="app">
       <Navigation onLoginClick={onLoginClick} />
       <HeroSection onGetStarted={onLoginClick} />
-      <FortuneFormSection />
-      <FortuneResultsSection />
+      <FortuneFormSection onFortuneGenerated={handleFortuneGenerated} />
+      <FortuneResultsSection generatedFortune={generatedFortune} />
       <WhyDecodeBaZiSection />
       <WhyBaziSection />
       <TestimonialsSection />
