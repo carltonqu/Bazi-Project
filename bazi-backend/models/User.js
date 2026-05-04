@@ -26,6 +26,19 @@ const UserSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  // Email verification fields
+  isEmailVerified: {
+    type: Boolean,
+    default: false
+  },
+  emailVerificationToken: {
+    type: String,
+    default: null
+  },
+  emailVerificationExpires: {
+    type: Date,
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -39,5 +52,6 @@ const UserSchema = new mongoose.Schema({
 // Index for faster queries
 UserSchema.index({ email: 1 });
 UserSchema.index({ googleId: 1 });
+UserSchema.index({ emailVerificationToken: 1 });
 
 export const User = mongoose.models.User || mongoose.model('User', UserSchema);

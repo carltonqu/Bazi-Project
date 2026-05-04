@@ -5,8 +5,10 @@ import OpenAI from "openai";
 import { z } from "zod";
 import { OAuth2Client } from "google-auth-library";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import { connectDB } from "../lib/db.js";
 import { User } from "../models/User.js";
+import { sendVerificationEmail } from "../lib/email.js";
 
 const app = express();
 
@@ -189,6 +191,15 @@ app.post("/api/auth/login", async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
+    // Check if email is verified
+    if (!user.isEmailVerified) {
+      return res.status(403).json({
+        message: "Email not verified. Please check your email and verify your account.",
+        requiresVerification: true,
+        email: user.email,
+      });
+    }
+
     // Update last login
     user.lastLogin = new Date();
     await user.save();
@@ -203,6 +214,7 @@ app.post("/api/auth/login", async (req, res) => {
         email: user.email,
         name: user.name,
         picture: user.picture,
+        isEmailVerified: true,
       },
       token,
     });
@@ -237,33 +249,147 @@ app.post("/api/auth/signup", async (req, res) => {
       return res.status(409).json({ message: "Email already registered" });
     }
 
-    // Create new user
+    // Generate verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    // Create new user (unverified)
     const user = new User({
       email: email.toLowerCase(),
       name: name,
       password: password, // In production, hash this with bcrypt
+      isEmailVerified: false,
+      emailVerificationToken: verificationToken,
+      emailVerificationExpires: verificationExpires,
       lastLogin: new Date()
     });
 
     await user.save();
 
-    const token = generateToken(user);
+    // Send verification email
+    const emailResult = await sendVerificationEmail(email, name, verificationToken);
+    
+    if (!emailResult.success && !emailResult.devMode) {
+      console.error('Failed to send verification email:', emailResult.error);
+    }
 
     res.status(201).json({
       success: true,
-      message: "Account created successfully",
+      message: "Account created successfully. Please check your email to verify your account.",
+      requiresVerification: true,
       user: {
         id: user._id.toString(),
         email: user.email,
         name: user.name,
         picture: user.picture,
+        isEmailVerified: false,
       },
-      token,
+      devMode: emailResult.devMode || false,
     });
   } catch (error) {
     console.error("Signup error:", error);
     res.status(500).json({
       message: "Signup failed",
+      error: error.message,
+    });
+  }
+});
+
+// Email Verification Endpoint
+app.get("/api/auth/verify-email", async (req, res) => {
+  try {
+    const { token } = req.query;
+
+    if (!token) {
+      return res.status(400).json({ message: "Verification token is required" });
+    }
+
+    // Connect to DB
+    await connectDB();
+
+    // Find user with this verification token
+    const user = await User.findOne({
+      emailVerificationToken: token,
+      emailVerificationExpires: { $gt: new Date() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired verification token" });
+    }
+
+    // Mark email as verified
+    user.isEmailVerified = true;
+    user.emailVerificationToken = null;
+    user.emailVerificationExpires = null;
+    await user.save();
+
+    // Generate token for auto-login
+    const authToken = generateToken(user);
+
+    res.json({
+      success: true,
+      message: "Email verified successfully",
+      user: {
+        id: user._id.toString(),
+        email: user.email,
+        name: user.name,
+        picture: user.picture,
+        isEmailVerified: true,
+      },
+      token: authToken,
+    });
+  } catch (error) {
+    console.error("Email verification error:", error);
+    res.status(500).json({
+      message: "Email verification failed",
+      error: error.message,
+    });
+  }
+});
+
+// Resend Verification Email
+app.post("/api/auth/resend-verification", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    // Connect to DB
+    await connectDB();
+
+    // Find user
+    const user = await User.findOne({ email: email.toLowerCase() });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.isEmailVerified) {
+      return res.status(400).json({ message: "Email is already verified" });
+    }
+
+    // Generate new verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    user.emailVerificationToken = verificationToken;
+    user.emailVerificationExpires = verificationExpires;
+    await user.save();
+
+    // Send verification email
+    const emailResult = await sendVerificationEmail(user.email, user.name, verificationToken);
+
+    res.json({
+      success: true,
+      message: "Verification email sent successfully",
+      devMode: emailResult.devMode || false,
+    });
+  } catch (error) {
+    console.error("Resend verification error:", error);
+    res.status(500).json({
+      message: "Failed to resend verification email",
       error: error.message,
     });
   }
