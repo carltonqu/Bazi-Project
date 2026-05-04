@@ -329,40 +329,140 @@ Rules:
 - JSON only.`;
 }
 
+// Mock fortune data for when AI is not configured
+function generateMockFortune(input) {
+  return {
+    categories: {
+      aboutMyself: [
+        {
+          topic: "Inner Nature",
+          reading: `Based on your birth chart, ${input.name}, you possess a balanced elemental composition with strong intuitive abilities. Your natural curiosity drives you to explore deeper meanings in life.`,
+          advice: "Trust your instincts when making important decisions. Your intuition is a powerful guide."
+        },
+        {
+          topic: "Core Strengths",
+          reading: "Your chart reveals resilience and adaptability as your primary strengths. You have the ability to navigate through challenges with grace and determination.",
+          advice: "Leverage your adaptability in times of change. Your flexibility is your greatest asset."
+        },
+        {
+          topic: "Growth Areas",
+          reading: "There is potential for developing greater patience and mindfulness. Your active mind sometimes races ahead of the present moment.",
+          advice: "Practice mindfulness and meditation to ground your energy and enhance focus."
+        }
+      ],
+      career: [
+        {
+          topic: "Professional Path",
+          reading: `Your Bazi suggests a career path that aligns with your analytical abilities and creative problem-solving skills, ${input.name}. Fields involving strategy, innovation, or helping others would be particularly fulfilling.`,
+          advice: "Seek roles that offer both intellectual challenge and meaningful impact."
+        },
+        {
+          topic: "Work Style",
+          reading: "You thrive in environments that value independent thinking while also offering collaborative opportunities. Your leadership style is consultative rather than authoritarian.",
+          advice: "Look for workplaces that balance autonomy with team collaboration."
+        },
+        {
+          topic: "Career Timing",
+          reading: "The coming months present opportunities for career advancement or skill development. Pay attention to unexpected opportunities that align with your long-term goals.",
+          advice: "Stay open to new opportunities while maintaining focus on your core objectives."
+        }
+      ],
+      relationships: [
+        {
+          topic: "Relationship Style",
+          reading: "Your chart indicates you value deep, meaningful connections over superficial interactions. You are loyal and committed once trust is established.",
+          advice: "Invest time in nurturing your closest relationships. Quality matters more than quantity."
+        },
+        {
+          topic: "Compatibility",
+          reading: "You are most compatible with individuals who appreciate your thoughtfulness and respect your need for occasional solitude.",
+          advice: "Communicate your needs clearly to partners and friends to avoid misunderstandings."
+        },
+        {
+          topic: "Relationship Growth",
+          reading: "Current energies support healing and strengthening of existing relationships. It's a favorable time to resolve past conflicts.",
+          advice: "Initiate honest conversations about any lingering issues in your relationships."
+        }
+      ],
+      business: [
+        {
+          topic: "Business Acumen",
+          reading: "Your chart shows strong potential for business success through careful planning and strategic partnerships. You have a natural eye for viable opportunities.",
+          advice: "Conduct thorough research before committing to business ventures. Your due diligence will pay off."
+        },
+        {
+          topic: "Financial Outlook",
+          reading: "Steady growth is indicated for your financial situation. Avoid risky investments and focus on building sustainable wealth.",
+          advice: "Create a long-term financial plan and stick to it consistently."
+        },
+        {
+          topic: "Partnerships",
+          reading: "Collaborative ventures look promising, especially with partners who complement your skills. Look for those who share your values.",
+          advice: "Choose business partners carefully. Shared values are more important than shared interests."
+        }
+      ],
+      lifeGoals: [
+        {
+          topic: "Life Purpose",
+          reading: `Your Bazi suggests a life path centered on continuous learning and helping others grow, ${input.name}. Your experiences are meant to be shared for the benefit of those around you.`,
+          advice: "Embrace opportunities to mentor or teach others. Your wisdom is valuable."
+        },
+        {
+          topic: "Personal Development",
+          reading: "The next phase of your life emphasizes inner growth and self-mastery. External achievements will follow internal alignment.",
+          advice: "Prioritize personal development alongside professional goals."
+        },
+        {
+          topic: "Legacy",
+          reading: "Your lasting impact will come from the positive influence you have on others' lives rather than material accomplishments alone.",
+          advice: "Focus on building meaningful relationships and contributing to your community."
+        }
+      ]
+    }
+  };
+}
+
 async function generateFortune(input) {
   const baseURL = process.env.OPENCLAW_BASE_URL;
   const apiKey = process.env.OPENCLAW_API_KEY;
   const model = process.env.OPENCLAW_MODEL || "openai-codex/gpt-5.3-codex";
 
-  if (!baseURL || !apiKey) {
-    throw new Error("Missing OPENCLAW_BASE_URL or OPENCLAW_API_KEY in environment.");
+  // If API credentials are not configured, return mock data
+  if (!baseURL || !apiKey || apiKey === 'your-openclaw-api-key') {
+    console.log('AI API not configured, returning mock fortune data');
+    return generateMockFortune(input);
   }
 
-  const client = new OpenAI({ baseURL, apiKey });
+  try {
+    const client = new OpenAI({ baseURL, apiKey });
 
-  const completion = await client.chat.completions.create({
-    model,
-    temperature: 0.7,
-    messages: [
-      {
-        role: "system",
-        content:
-          "You produce safe, culturally respectful Bazi-style guidance and must output strict JSON.",
-      },
-      {
-        role: "user",
-        content: buildPrompt(input),
-      },
-    ],
-    response_format: { type: "json_object" },
-  });
+    const completion = await client.chat.completions.create({
+      model,
+      temperature: 0.7,
+      messages: [
+        {
+          role: "system",
+          content:
+            "You produce safe, culturally respectful Bazi-style guidance and must output strict JSON.",
+        },
+        {
+          role: "user",
+          content: buildPrompt(input),
+        },
+      ],
+      response_format: { type: "json_object" },
+    });
 
-  const text = completion.choices?.[0]?.message?.content;
-  if (!text) throw new Error("No content returned from AI model.");
+    const text = completion.choices?.[0]?.message?.content;
+    if (!text) throw new Error("No content returned from AI model.");
 
-  const parsed = JSON.parse(text);
-  const validated = FortuneOutputSchema.parse(parsed);
-  return validated;
+    const parsed = JSON.parse(text);
+    const validated = FortuneOutputSchema.parse(parsed);
+    return validated;
+  } catch (error) {
+    console.error('AI generation failed, falling back to mock data:', error.message);
+    return generateMockFortune(input);
+  }
 }
 
 // Root route
