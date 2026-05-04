@@ -44,6 +44,15 @@ export function AuthProvider({ children }) {
       const data = await response.json();
 
       if (!response.ok) {
+        // Check if email verification is required
+        if (response.status === 403 && data.requiresVerification) {
+          return { 
+            success: false, 
+            requiresVerification: true,
+            email: data.email,
+            error: data.message 
+          };
+        }
         throw new Error(data.message || 'Login failed');
       }
 
@@ -84,13 +93,77 @@ export function AuthProvider({ children }) {
         throw new Error(data.message || 'Signup failed');
       }
 
-      // Save auth data
+      // Don't auto-login - user needs to verify email first
+      return { 
+        success: true, 
+        requiresVerification: true,
+        email: data.user.email,
+        devMode: data.devMode 
+      };
+    } catch (err) {
+      setError(err.message);
+      return { success: false, error: err.message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /**
+   * Resend verification email
+   */
+  const resendVerification = async (email) => {
+    try {
+      setError(null);
+      
+      const response = await fetch(`${API_BASE_URL}/api/auth/resend-verification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to resend verification email');
+      }
+
+      return { success: true, devMode: data.devMode };
+    } catch (err) {
+      setError(err.message);
+      return { success: false, error: err.message };
+    }
+  };
+
+  /**
+   * Verify email with token
+   */
+  const verifyEmail = async (token) => {
+    try {
+      setError(null);
+      setLoading(true);
+
+      const response = await fetch(`${API_BASE_URL}/api/auth/verify-email?token=${token}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Email verification failed');
+      }
+
+      // Save auth data after successful verification
       localStorage.setItem('bazi_token', data.token);
       localStorage.setItem('bazi_user', JSON.stringify(data.user));
       
       setUser(data.user);
       
-      return { success: true, isNewUser: true };
+      return { success: true };
     } catch (err) {
       setError(err.message);
       return { success: false, error: err.message };
@@ -168,6 +241,8 @@ export function AuthProvider({ children }) {
     login,
     signup,
     logout,
+    resendVerification,
+    verifyEmail,
     getToken,
     authFetch,
   };

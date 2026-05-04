@@ -5,7 +5,9 @@ function AuthModal({ isOpen, onClose, defaultMode = 'login' }) {
   const [mode, setMode] = useState(defaultMode); // 'login' or 'signup'
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { login, signup } = useAuth();
+  const [showVerification, setShowVerification] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState('');
+  const { login, signup, resendVerification } = useAuth();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -79,9 +81,31 @@ function AuthModal({ isOpen, onClose, defaultMode = 'login' }) {
     setIsLoading(false);
 
     if (result.success) {
-      onClose();
+      if (result.requiresVerification) {
+        setShowVerification(true);
+        setVerificationEmail(result.email);
+      } else {
+        onClose();
+      }
+    } else if (result.requiresVerification) {
+      // Login failed because email not verified
+      setShowVerification(true);
+      setVerificationEmail(result.email);
     } else {
       setError(result.error || 'Authentication failed. Please try again.');
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setIsLoading(true);
+    const result = await resendVerification(verificationEmail);
+    setIsLoading(false);
+    
+    if (result.success) {
+      setError(null);
+      alert('Verification email sent! Please check your inbox.');
+    } else {
+      setError(result.error || 'Failed to resend verification email.');
     }
   };
 
@@ -121,15 +145,62 @@ function AuthModal({ isOpen, onClose, defaultMode = 'login' }) {
           </p>
         </div>
 
-        {/* Error */}
-        {error && (
-          <div className="auth-error">
-            <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-            </svg>
-            {error}
+        {/* Verification Required State */}
+        {showVerification ? (
+          <div className="auth-verification" style={{ textAlign: 'center', padding: '20px 0' }}>
+            <div style={{
+              width: '60px',
+              height: '60px',
+              background: 'linear-gradient(135deg, #d4af37 0%, #f59e0b 100%)',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 20px',
+              fontSize: '28px'
+            }}>
+              ✉️
+            </div>
+            <h3 style={{ marginBottom: '12px', color: '#fff' }}>Verify Your Email</h3>
+            <p style={{ color: 'rgba(255,255,255,0.7)', marginBottom: '20px', lineHeight: 1.6 }}>
+              We've sent a verification email to <strong>{verificationEmail}</strong>. 
+              Please check your inbox and click the verification link to complete your registration.
+            </p>
+            <button
+              onClick={handleResendVerification}
+              disabled={isLoading}
+              style={{
+                background: 'transparent',
+                border: '1px solid #d4af37',
+                color: '#d4af37',
+                padding: '10px 20px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                marginBottom: '12px'
+              }}
+            >
+              {isLoading ? 'Sending...' : 'Resend Verification Email'}
+            </button>
+            <p style={{ marginTop: '16px' }}>
+              <button 
+                className="auth-link" 
+                onClick={() => { setShowVerification(false); setMode('login'); }}
+              >
+                Back to Login
+              </button>
+            </p>
           </div>
-        )}
+        ) : (
+          <>
+            {/* Error */}
+            {error && (
+              <div className="auth-error">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+                {error}
+              </div>
+            )}
 
         {/* Form */}
         <form className="auth-form" onSubmit={handleSubmit}>
@@ -239,13 +310,15 @@ function AuthModal({ isOpen, onClose, defaultMode = 'login' }) {
           </button>
         </form>
 
-        {/* Footer */}
-        <p className="auth-modal-footer">
-          {mode === 'login' ? "Don't have an account? " : "Already have an account? "}
-          <button className="auth-link" onClick={switchMode}>
-            {mode === 'login' ? 'Create account' : 'Sign in'}
-          </button>
-        </p>
+            {/* Footer */}
+            <p className="auth-modal-footer">
+              {mode === 'login' ? "Don't have an account? " : "Already have an account? "}
+              <button className="auth-link" onClick={switchMode}>
+                {mode === 'login' ? 'Create account' : 'Sign in'}
+              </button>
+            </p>
+          </>
+        )}
       </div>
     </div>
   );

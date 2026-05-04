@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Routes, Route, Link, useNavigate } from "react-router-dom";
+import { Routes, Route, Link, useNavigate, useSearchParams } from "react-router-dom";
 import "./App.css";
 import "./pages/Auth.css";
 import AuthModal from "./components/AuthModal";
@@ -1502,12 +1502,152 @@ function HomePageWrapper() {
   );
 }
 
+// Email Verification Page
+function VerifyEmailPage() {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { verifyEmail, resendVerification } = useAuth();
+  const [status, setStatus] = useState('verifying'); // verifying, success, error
+  const [message, setMessage] = useState('');
+  const [email, setEmail] = useState('');
+
+  useEffect(() => {
+    const token = searchParams.get('token');
+    if (token) {
+      handleVerify(token);
+    } else {
+      setStatus('error');
+      setMessage('Invalid verification link. Please check your email and try again.');
+    }
+  }, [searchParams]);
+
+  const handleVerify = async (token) => {
+    const result = await verifyEmail(token);
+    if (result.success) {
+      setStatus('success');
+      setMessage('Your email has been verified successfully! Redirecting...');
+      setTimeout(() => navigate('/'), 2000);
+    } else {
+      setStatus('error');
+      setMessage(result.error || 'Verification failed. The link may have expired.');
+    }
+  };
+
+  const handleResend = async () => {
+    if (!email) return;
+    const result = await resendVerification(email);
+    if (result.success) {
+      setMessage('Verification email sent! Please check your inbox.');
+    } else {
+      setMessage(result.error || 'Failed to resend verification email.');
+    }
+  };
+
+  return (
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #0a0a12 0%, #12121f 50%, #0d0d18 100%)',
+      color: 'white',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '20px'
+    }}>
+      <div style={{
+        maxWidth: '500px',
+        width: '100%',
+        background: 'rgba(255,255,255,0.05)',
+        padding: '40px',
+        borderRadius: '20px',
+        textAlign: 'center'
+      }}>
+        <div style={{
+          width: '80px',
+          height: '80px',
+          background: 'linear-gradient(135deg, #d4af37 0%, #f59e0b 100%)',
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          margin: '0 auto 24px',
+          fontSize: '36px'
+        }}>
+          {status === 'verifying' && '⏳'}
+          {status === 'success' && '✓'}
+          {status === 'error' && '✕'}
+        </div>
+
+        <h1 style={{ fontSize: '28px', marginBottom: '16px' }}>
+          {status === 'verifying' && 'Verifying Your Email'}
+          {status === 'success' && 'Email Verified!'}
+          {status === 'error' && 'Verification Failed'}
+        </h1>
+
+        <p style={{ opacity: 0.7, marginBottom: '24px', lineHeight: 1.6 }}>
+          {message}
+        </p>
+
+        {status === 'error' && (
+          <div>
+            <input
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                background: 'rgba(255,255,255,0.1)',
+                border: '1px solid rgba(255,255,255,0.2)',
+                borderRadius: '10px',
+                color: 'white',
+                marginBottom: '16px',
+                fontSize: '16px'
+              }}
+            />
+            <button
+              onClick={handleResend}
+              style={{
+                width: '100%',
+                padding: '14px',
+                background: 'linear-gradient(135deg, #d4af37 0%, #f59e0b 100%)',
+                color: '#0a0a12',
+                border: 'none',
+                borderRadius: '10px',
+                fontSize: '16px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                marginBottom: '12px'
+              }}
+            >
+              Resend Verification Email
+            </button>
+          </div>
+        )}
+
+        <Link
+          to="/"
+          style={{
+            color: '#d4af37',
+            textDecoration: 'none',
+            display: 'inline-block',
+            marginTop: '16px'
+          }}
+        >
+          ← Back to Home
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 // Main App with Modal
 export default function App() {
   return (
     <Routes>
       <Route path="/" element={<HomePageWrapper />} />
       <Route path="/dashboard" element={<DashboardPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
     </Routes>
   );
 }
