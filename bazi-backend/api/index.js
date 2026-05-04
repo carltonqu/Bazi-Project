@@ -13,6 +13,8 @@ const allowedOrigins = [
   "http://localhost:5173",
   "https://bazi-frontend-gray.vercel.app",
   "https://bazi-frontend-itmuyfxq8-aidevelopers-projects-a5652f1e.vercel.app",
+  "https://bazi-frontend-isso3mt9o-aidevelopers-projects-a5652f1e.vercel.app",
+  "https://bazi-frontend-ne2gsge9z-aidevelopers-projects-a5652f1e.vercel.app",
 ];
 
 if (process.env.FRONTEND_ORIGIN) {
@@ -152,6 +154,112 @@ app.post("/api/auth/google", async (req, res) => {
 
 app.post("/api/auth/logout", (req, res) => {
   res.json({ success: true, message: "Logged out successfully" });
+});
+
+// Email/Password Login
+app.post("/api/auth/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
+
+    // Find user by email (check both email and googleId keys for now)
+    let user = null;
+    for (const [key, u] of users.entries()) {
+      if (u.email === email.toLowerCase()) {
+        user = u;
+        break;
+      }
+    }
+
+    if (!user) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    // For now, simple password check (in production, use bcrypt)
+    // Users created via signup will have a password field
+    if (!user.password || user.password !== password) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    const token = generateToken(user);
+
+    res.json({
+      success: true,
+      message: "Login successful",
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        picture: user.picture,
+      },
+      token,
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({
+      message: "Login failed",
+      error: error.message,
+    });
+  }
+});
+
+// Email/Password Signup
+app.post("/api/auth/signup", async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "Name, email, and password are required" });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
+    }
+
+    // Check if user already exists
+    for (const [key, u] of users.entries()) {
+      if (u.email === email.toLowerCase()) {
+        return res.status(409).json({ message: "Email already registered" });
+      }
+    }
+
+    // Create new user
+    const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const user = {
+      id: userId,
+      email: email.toLowerCase(),
+      name: name,
+      password: password, // In production, hash this with bcrypt
+      picture: null,
+      createdAt: new Date().toISOString(),
+      lastLogin: new Date().toISOString(),
+    };
+
+    users.set(userId, user);
+
+    const token = generateToken(user);
+
+    res.status(201).json({
+      success: true,
+      message: "Account created successfully",
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        picture: user.picture,
+      },
+      token,
+    });
+  } catch (error) {
+    console.error("Signup error:", error);
+    res.status(500).json({
+      message: "Signup failed",
+      error: error.message,
+    });
+  }
 });
 
 // Fortune schemas
