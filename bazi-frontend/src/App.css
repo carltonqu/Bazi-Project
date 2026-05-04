@@ -1260,16 +1260,7 @@ body {
   flex: 1;
 }
 
-.sidebar-nav::before {
-  content: "";
-  position: absolute;
-  left: 15px;
-  top: 12px;
-  bottom: 12px;
-  width: 2px;
-  background: linear-gradient(180deg, rgba(245, 158, 11, 0.4) 0%, rgba(56, 189, 248, 0.2) 50%, rgba(168, 85, 247, 0.2) 100%);
-  border-radius: 2px;
-}
+
 
 .sidebar-item {
   display: flex;
@@ -1293,7 +1284,7 @@ body {
 }
 
 .sidebar-item.active {
-  background: rgba(245, 158, 11, 0.15);
+  background: rgba(230, 57, 70, 0.15);
   color: #fff;
 }
 
@@ -1316,14 +1307,14 @@ body {
 }
 
 .sidebar-item.active .sidebar-step-dot {
-  background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+  background: linear-gradient(135deg, #E63946 0%, #FF6B6B 100%);
   color: #fff;
   border-color: transparent;
-  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
+  box-shadow: 0 4px 16px rgba(230, 57, 70, 0.4);
 }
 
 .sidebar-item:hover .sidebar-step-dot {
-  border-color: rgba(245, 158, 11, 0.5);
+  border-color: rgba(230, 57, 70, 0.5);
   color: rgba(255, 255, 255, 0.8);
 }
 
