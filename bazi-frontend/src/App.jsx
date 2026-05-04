@@ -58,7 +58,7 @@ function Navigation({ onLoginClick }) {
 }
 
 // Hero Section - Dark Immersive Style
-function HeroSection({ onGetStarted }) {
+function HeroSection({ onGetStarted, user }) {
   const [hoveredDot, setHoveredDot] = useState(null);
 
   // Generate random dots for hero section
@@ -70,6 +70,19 @@ function HeroSection({ onGetStarted }) {
     delay: Math.random() * 5,
     duration: Math.random() * 3 + 4
   }));
+
+  const handleButtonClick = () => {
+    if (user) {
+      // If logged in, scroll to form section
+      const formSection = document.getElementById('features');
+      if (formSection) {
+        formSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    } else {
+      // If not logged in, call the original onGetStarted (opens login modal)
+      onGetStarted();
+    }
+  };
 
   return (
     <section className="hero" id="hero">
@@ -113,8 +126,8 @@ function HeroSection({ onGetStarted }) {
           Discover insights about your destiny, career path, and relationships.
         </p>
         <div className="hero-ctas">
-          <button onClick={onGetStarted} className="hero-cta-primary">
-            Get Started
+          <button onClick={handleButtonClick} className="hero-cta-primary">
+            {user ? 'Generate Fortune' : 'Get Started'}
           </button>
         </div>
         
@@ -1357,6 +1370,7 @@ function Footer() {
 // Home Page Component
 function HomePage({ onLoginClick }) {
   const [generatedFortune, setGeneratedFortune] = useState(null);
+  const { user } = useAuth();
 
   const handleFortuneGenerated = (fortuneData) => {
     setGeneratedFortune(fortuneData);
@@ -1365,7 +1379,7 @@ function HomePage({ onLoginClick }) {
   return (
     <div className="app">
       <Navigation onLoginClick={onLoginClick} />
-      <HeroSection onGetStarted={onLoginClick} />
+      <HeroSection onGetStarted={onLoginClick} user={user} />
       <FortuneFormSection onFortuneGenerated={handleFortuneGenerated} />
       <FortuneResultsSection generatedFortune={generatedFortune} />
       <WhyDecodeBaZiSection />
