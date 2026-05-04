@@ -21,6 +21,7 @@ const allowedOrigins = [
   "https://bazi-frontend-ne2gsge9z-aidevelopers-projects-a5652f1e.vercel.app",
   "https://bazi-frontend-m9r7hhvjq-aidevelopers-projects-a5652f1e.vercel.app",
   "https://bazi-frontend-p6mnehamb-aidevelopers-projects-a5652f1e.vercel.app",
+  "https://bazi-frontend-i3vqv5m4u-aidevelopers-projects-a5652f1e.vercel.app",
 ];
 
 if (process.env.FRONTEND_ORIGIN) {
