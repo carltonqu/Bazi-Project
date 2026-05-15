@@ -15,6 +15,8 @@ const app = express();
 // CORS configuration - allow multiple origins
 const allowedOrigins = [
   "http://localhost:5173",
+  "https://thelifecycleai.com",
+  "https://www.thelifecycleai.com",
   "https://bazi-frontend-gray.vercel.app",
   "https://bazi-frontend-itmuyfxq8-aidevelopers-projects-a5652f1e.vercel.app",
   "https://bazi-frontend-isso3mt9o-aidevelopers-projects-a5652f1e.vercel.app",

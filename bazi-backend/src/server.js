@@ -12,6 +12,8 @@ const PORT = process.env.PORT || 3000;
 // Allow multiple origins for CORS
 const allowedOrigins = [
   "http://localhost:5173",
+  "https://thelifecycleai.com",
+  "https://www.thelifecycleai.com",
   "https://bazi-frontend-gray.vercel.app",
   "https://bazi-frontend-b4xschkld-aidevelopers-projects-a5652f1e.vercel.app",
 ];

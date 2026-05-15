@@ -29,7 +29,8 @@ export async function sendVerificationEmail(email, name, verificationToken) {
 
   try {
     const transporter = createTransporter();
-    const verificationUrl = `${process.env.FRONTEND_URL || 'https://bazi-frontend-gray.vercel.app'}/verify-email?token=${verificationToken}`;
+    const verificationBase = process.env.FRONTEND_URL || process.env.FRONTEND_ORIGIN || 'https://thelifecycleai.com';
+    const verificationUrl = `${verificationBase}/verify-email?token=${verificationToken}`;
 
     const mailOptions = {
       from: `"Bazi Fortune Teller" <${process.env.EMAIL_USER}>`,
