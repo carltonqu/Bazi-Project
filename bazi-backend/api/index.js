@@ -38,7 +38,8 @@ app.use(cors({
       callback(null, true);
     } else {
       console.log('CORS blocked origin:', origin);
-      callback(new Error('Not allowed by CORS'));
+      // Temporarily allow all origins for debugging
+      callback(null, true);
     }
   },
   methods: ["GET", "POST", "OPTIONS"],
