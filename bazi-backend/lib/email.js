@@ -41,7 +41,8 @@ async function sendWithResend(to, subject, html) {
 }
 
 export async function sendVerificationEmail(email, name, verificationToken) {
-  const verificationBase = process.env.FRONTEND_URL || process.env.FRONTEND_ORIGIN || 'https://bazi-frontend-gray.vercel.app';
+  // Hardcoded to ensure correct domain - DO NOT CHANGE
+  const verificationBase = 'https://bazi-frontend-gray.vercel.app';
   const verificationUrl = `${verificationBase}/verify-email?token=${verificationToken}`;
 
   const htmlContent = `
