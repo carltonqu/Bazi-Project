@@ -46,6 +46,19 @@ const UserSchema = new mongoose.Schema({
   lastLogin: {
     type: Date,
     default: Date.now
+  },
+  subscriptionStatus: {
+    type: String,
+    enum: ["free", "active", "canceled", "past_due"],
+    default: "free"
+  },
+  stripeCustomerId: {
+    type: String,
+    default: null
+  },
+  stripeSubscriptionId: {
+    type: String,
+    default: null
   }
 });
 

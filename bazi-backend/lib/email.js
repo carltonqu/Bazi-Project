@@ -3,11 +3,12 @@ import nodemailer from 'nodemailer';
 // Resend API configuration
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://bazi-frontend-gray.vercel.app';
 
 // Create email transporter (fallback to Gmail if Resend not configured)
 const createTransporter = () => {
   // Use Gmail SMTP or other service
-  return nodemailer.createTransporter({
+  return nodemailer.createTransport({
     service: 'gmail',
     auth: {
       user: process.env.EMAIL_USER,
@@ -41,9 +42,7 @@ async function sendWithResend(to, subject, html) {
 }
 
 export async function sendVerificationEmail(email, name, verificationToken) {
-  // Hardcoded to ensure correct domain - DO NOT CHANGE
-  const verificationBase = 'https://bazi-frontend-gray.vercel.app';
-  const verificationUrl = `${verificationBase}/verify-email?token=${verificationToken}`;
+  const verificationUrl = `${FRONTEND_URL}/verify-email?token=${verificationToken}`;
 
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f9f9f9;">
@@ -106,14 +105,22 @@ export async function sendVerificationEmail(email, name, verificationToken) {
     }
   }
 
-  // Development mode - log to console
-  console.log('========================================');
-  console.log('EMAIL VERIFICATION (Development Mode)');
-  console.log('========================================');
-  console.log(`To: ${email}`);
-  console.log(`Name: ${name}`);
-  console.log(`Verification Token: ${verificationToken}`);
-  console.log(`Verification URL: ${verificationUrl}`);
-  console.log('========================================');
-  return { success: true, devMode: true };
+  // Development mode fallback (local only)
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('========================================');
+    console.log('EMAIL VERIFICATION (Development Mode)');
+    console.log('========================================');
+    console.log(`To: ${email}`);
+    console.log(`Name: ${name}`);
+    console.log(`Verification Token: ${verificationToken}`);
+    console.log(`Verification URL: ${verificationUrl}`);
+    console.log('========================================');
+    return { success: true, devMode: true };
+  }
+
+  // Production: fail explicitly when no email provider is configured
+  return {
+    success: false,
+    error: 'No email provider configured. Set RESEND_API_KEY or EMAIL_USER/EMAIL_PASS.',
+  };
 }

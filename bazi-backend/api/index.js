@@ -6,9 +6,25 @@ import { z } from "zod";
 import { OAuth2Client } from "google-auth-library";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import Stripe from "stripe";
 import { connectDB } from "../lib/db.js";
 import { User } from "../models/User.js";
 import { sendVerificationEmail } from "../lib/email.js";
+
+// Stripe setup (lazy initialization)
+let stripe;
+function getStripe() {
+  if (!stripe) {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      throw new Error("STRIPE_SECRET_KEY not configured");
+    }
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: "2024-12-18.acacia",
+    });
+  }
+  return stripe;
+}
+const STRIPE_PRICE_ID = process.env.STRIPE_PRICE_ID || "price_1R8example";
 
 const app = express();
 
@@ -188,15 +204,6 @@ app.post("/api/auth/login", async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    // Check if email is verified
-    if (!user.isEmailVerified) {
-      return res.status(403).json({
-        message: "Email not verified. Please check your email and verify your account.",
-        requiresVerification: true,
-        email: user.email,
-      });
-    }
-
     // Update last login
     user.lastLogin = new Date();
     await user.save();
@@ -250,38 +257,32 @@ app.post("/api/auth/signup", async (req, res) => {
     const verificationToken = crypto.randomBytes(32).toString('hex');
     const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-    // Create new user (unverified)
+    // Create new user (auto-verified for now - skipping email verification)
     const user = new User({
       email: email.toLowerCase(),
       name: name,
       password: password, // In production, hash this with bcrypt
-      isEmailVerified: false,
-      emailVerificationToken: verificationToken,
-      emailVerificationExpires: verificationExpires,
+      isEmailVerified: true, // Auto-verify since we're skipping email verification
+      emailVerificationToken: null,
+      emailVerificationExpires: null,
       lastLogin: new Date()
     });
 
     await user.save();
 
-    // Send verification email
-    const emailResult = await sendVerificationEmail(email, name, verificationToken);
-    
-    if (!emailResult.success && !emailResult.devMode) {
-      console.error('Failed to send verification email:', emailResult.error);
-    }
+    const token = generateToken(user);
 
     res.status(201).json({
       success: true,
-      message: "Account created successfully. Please check your email to verify your account.",
-      requiresVerification: true,
+      message: "Account created successfully! Welcome to Bazi Fortune Teller.",
       user: {
         id: user._id.toString(),
         email: user.email,
         name: user.name,
         picture: user.picture,
-        isEmailVerified: false,
+        isEmailVerified: true,
       },
-      devMode: emailResult.devMode || false,
+      token,
     });
   } catch (error) {
     console.error("Signup error:", error);
@@ -378,9 +379,19 @@ app.post("/api/auth/resend-verification", async (req, res) => {
     // Send verification email
     const emailResult = await sendVerificationEmail(user.email, user.name, verificationToken);
 
+    if (!emailResult.success) {
+      console.error('Failed to resend verification email:', emailResult.error);
+      return res.status(502).json({
+        success: false,
+        message: "Failed to send verification email. Please try again later.",
+        error: emailResult.error || "Email service unavailable"
+      });
+    }
+
     res.json({
       success: true,
       message: "Verification email sent successfully",
+      emailSent: true,
       devMode: emailResult.devMode || false,
     });
   } catch (error) {
@@ -674,9 +685,96 @@ app.get("/api/debug", async (req, res) => {
         present: !!JWT_SECRET,
         isDefault: JWT_SECRET === "your-super-secret-jwt-key-change-in-production"
       },
+      FRONTEND_URL: process.env.FRONTEND_URL || 'not set',
+      STRIPE_PRICE_ID: process.env.STRIPE_PRICE_ID ? 'set' : 'not set',
+      STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY ? 'set' : 'not set',
       NODE_ENV: process.env.NODE_ENV || 'not set'
     }
   });
+});
+
+// Stripe Checkout Session using direct API call
+app.post("/api/stripe/checkout-session", async (req, res) => {
+  try {
+    const { email, userId } = req.body;
+    if (!email) return res.status(400).json({ error: "Email required" });
+
+    const params = new URLSearchParams();
+    params.append("customer_email", email);
+    params.append("line_items[0][price]", STRIPE_PRICE_ID);
+    params.append("line_items[0][quantity]", "1");
+    params.append("mode", "subscription");
+    params.append("success_url", process.env.FRONTEND_URL + "/?subscription=success&session_id={CHECKOUT_SESSION_ID}");
+    params.append("cancel_url", process.env.FRONTEND_URL + "/?subscription=cancel");
+    if (userId) params.append("metadata[userId]", userId);
+
+    const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.STRIPE_SECRET_KEY}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: params.toString(),
+    });
+
+    const session = await response.json();
+    if (session.error) {
+      throw new Error(session.error.message);
+    }
+
+    res.json({ sessionId: session.id, url: session.url });
+  } catch (error) {
+    console.error("Stripe checkout error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Stripe Webhook
+app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), async (req, res) => {
+  const sig = req.headers["stripe-signature"];
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  let event;
+  try {
+    event = getStripe().webhooks.constructEvent(req.body, sig, endpointSecret);
+  } catch (err) {
+    console.error("Webhook signature verification failed:", err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object;
+    const email = session.customer_email;
+    const userId = session.metadata?.userId;
+
+    await connectDB();
+    if (userId) {
+      await User.findByIdAndUpdate(userId, { subscriptionStatus: "active", stripeCustomerId: session.customer });
+    } else if (email) {
+      await User.findOneAndUpdate({ email: email.toLowerCase() }, { subscriptionStatus: "active", stripeCustomerId: session.customer });
+    }
+  }
+
+  res.json({ received: true });
+});
+
+// Verify subscription status
+app.get("/api/subscription/status", async (req, res) => {
+  try {
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    if (!token) return res.status(401).json({ error: "Unauthorized" });
+
+    const decoded = jwt.verify(token, JWT_SECRET);
+    await connectDB();
+    const user = await User.findById(decoded.userId);
+
+    res.json({
+      subscriptionStatus: user?.subscriptionStatus || "free",
+      stripeCustomerId: user?.stripeCustomerId || null,
+    });
+  } catch (error) {
+    res.status(401).json({ error: "Invalid token" });
+  }
 });
 
 // Export for Vercel serverless

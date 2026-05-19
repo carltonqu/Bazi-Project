@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Routes, Route, Link, useNavigate, useSearchParams } from "react-router-dom";
 import "./App.css";
 import "./pages/Auth.css";
+import "./subscription-modal.css";
 import AuthModal from "./components/AuthModal";
 import { useAuth } from "./context/AuthContext";
 import { API_BASE_URL } from "./config";
@@ -147,7 +148,12 @@ function HeroSection({ onGetStarted, user }) {
 }
 
 // Bazi Fortune Form Section - Split Screen Design
-function FortuneFormSection({ onFortuneGenerated }) {
+function FortuneFormSection({ onFortuneGenerated, onLoginRequired, onTrialLimitReached }) {
+  const { user } = useAuth();
+  const GUEST_LIMIT = 3;
+  const LOGGED_FREE_LIMIT = 5;
+  const GUEST_COUNT_KEY = 'bazi_guest_fortune_count';
+
   const [formData, setFormData] = useState({
     name: "",
     birthDate: "",
@@ -160,6 +166,25 @@ function FortuneFormSection({ onFortuneGenerated }) {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [guestCount, setGuestCount] = useState(0);
+  const [freeUserCount, setFreeUserCount] = useState(0);
+  const [subscriptionStatus, setSubscriptionStatus] = useState('free');
+
+  useEffect(() => {
+    const sub = localStorage.getItem('bazi_subscription_status');
+    setSubscriptionStatus(sub === 'active' ? 'active' : 'free');
+
+    const guest = Number(localStorage.getItem(GUEST_COUNT_KEY) || '0');
+    setGuestCount(Number.isFinite(guest) ? guest : 0);
+
+    if (user?.email) {
+      const userKey = `bazi_free_fortune_count_${user.email.toLowerCase()}`;
+      const freeCount = Number(localStorage.getItem(userKey) || '0');
+      setFreeUserCount(Number.isFinite(freeCount) ? freeCount : 0);
+    } else {
+      setFreeUserCount(0);
+    }
+  }, [user]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -168,6 +193,19 @@ function FortuneFormSection({ onFortuneGenerated }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!user && guestCount >= GUEST_LIMIT) {
+      setError('You have reached the 3 free fortune limit. Please log in and subscribe ($5/month) for unlimited categories and generations.');
+      if (onTrialLimitReached) onTrialLimitReached();
+      return;
+    }
+
+    if (user && subscriptionStatus !== 'active' && freeUserCount >= LOGGED_FREE_LIMIT) {
+      setError('You have reached the 5 free generations for logged-in accounts. Please subscribe ($5/month) to continue.');
+      if (onTrialLimitReached) onTrialLimitReached();
+      return;
+    }
+
     setSubmitted(true);
     setLoading(true);
     setError(null);
@@ -204,6 +242,17 @@ function FortuneFormSection({ onFortuneGenerated }) {
       }
 
       const fortuneData = await response.json();
+
+      if (!user) {
+        const nextCount = guestCount + 1;
+        localStorage.setItem(GUEST_COUNT_KEY, String(nextCount));
+        setGuestCount(nextCount);
+      } else if (subscriptionStatus !== 'active' && user.email) {
+        const userKey = `bazi_free_fortune_count_${user.email.toLowerCase()}`;
+        const nextCount = freeUserCount + 1;
+        localStorage.setItem(userKey, String(nextCount));
+        setFreeUserCount(nextCount);
+      }
       
       // Pass generated fortune to parent component
       if (onFortuneGenerated) {
@@ -236,6 +285,15 @@ function FortuneFormSection({ onFortuneGenerated }) {
     { value: "travel", label: "Travel & Relocation" },
     { value: "general", label: "General Life Guidance" }
   ];
+
+  const remaining = !user
+    ? Math.max(0, GUEST_LIMIT - guestCount)
+    : (subscriptionStatus === 'active' ? Infinity : Math.max(0, LOGGED_FREE_LIMIT - freeUserCount));
+
+  const totalLimit = !user ? GUEST_LIMIT : LOGGED_FREE_LIMIT;
+  const usedCount = !user ? guestCount : freeUserCount;
+  const usagePercent = subscriptionStatus === 'active' ? 0 : Math.min(100, Math.round((usedCount / totalLimit) * 100));
+  const isLimitReached = subscriptionStatus !== 'active' && remaining === 0;
 
   return (
     <section className="fortune-form-section" id="features">
@@ -294,6 +352,16 @@ function FortuneFormSection({ onFortuneGenerated }) {
             </div>
             <h2>Generate Your Report</h2>
             <p>Enter your birth details to receive your personalized Bazi fortune reading</p>
+            {subscriptionStatus !== 'active' && (
+              <div className="usage-inline">
+                <div className="usage-stars" aria-label="usage stars">
+                  {Array.from({ length: totalLimit }).map((_, i) => (
+                    <span key={i} className={`usage-star ${i < usedCount ? 'filled' : ''}`}>★</span>
+                  ))}
+                </div>
+                {!submitted && error && <p className="usage-error">{error}</p>}
+              </div>
+            )}
           </div>
 
           <form className="centered-bazi-form" onSubmit={handleSubmit}>
@@ -403,8 +471,19 @@ function FortuneFormSection({ onFortuneGenerated }) {
               </div>
 
               <div className="form-submit-centered">
-                <button type="submit" className="btn-generate-centered">
-                  Generate Fortune Report
+                <button
+                  type="button"
+                  className="btn-generate-centered"
+                  onClick={() => {
+                    if (isLimitReached && onTrialLimitReached) {
+                      onTrialLimitReached();
+                    } else {
+                      const form = document.querySelector('.centered-bazi-form');
+                      if (form) form.requestSubmit();
+                    }
+                  }}
+                >
+                  {isLimitReached ? 'Unlock Unlimited — $5/month' : 'Generate Fortune Report'}
                 </button>
               </div>
             </form>
@@ -417,6 +496,13 @@ function FortuneFormSection({ onFortuneGenerated }) {
 // Fortune Results Section
 function FortuneResultsSection({ generatedFortune }) {
   const [activeIndex, setActiveIndex] = useState(0);
+  const { user } = useAuth();
+  const [subscriptionStatus, setSubscriptionStatus] = useState('free');
+
+  useEffect(() => {
+    const saved = localStorage.getItem('bazi_subscription_status');
+    setSubscriptionStatus(saved === 'active' ? 'active' : 'free');
+  }, [user]);
 
   // Default static fortune data (shown before AI generation)
   const defaultFortuneData = [
@@ -777,7 +863,18 @@ function FortuneResultsSection({ generatedFortune }) {
   };
 
   // Use AI-generated data if available, otherwise use default
-  const fortuneData = generatedFortune ? transformAIFortune(generatedFortune) : defaultFortuneData;
+  const fullFortuneData = generatedFortune ? transformAIFortune(generatedFortune) : defaultFortuneData;
+
+  let visibleCount = 3; // guest
+  if (user) visibleCount = 4; // logged-in free
+  if (user && subscriptionStatus === 'active') visibleCount = fullFortuneData.length; // subscribed
+
+  const fortuneData = fullFortuneData.slice(0, visibleCount);
+
+  useEffect(() => {
+    if (activeIndex >= fortuneData.length) setActiveIndex(0);
+  }, [activeIndex, fortuneData.length]);
+
   const activeItem = fortuneData[activeIndex];
 
   return (
@@ -787,7 +884,11 @@ function FortuneResultsSection({ generatedFortune }) {
           <span className="section-badge">Your Fortune Report</span>
           <h2 className="section-title">Personalized Insights</h2>
           <p className="section-subtitle">
-            Comprehensive analysis of your Bazi chart across all life areas
+            {user
+              ? (subscriptionStatus === 'active'
+                ? 'Subscribed: full category access unlocked.'
+                : 'Free account: 4 categories unlocked. Subscribe for full access.')
+              : 'Guest mode: 3 categories unlocked. Login and subscribe for full access.'}
           </p>
         </div>
 
@@ -1368,7 +1469,7 @@ function Footer() {
 }
 
 // Home Page Component
-function HomePage({ onLoginClick }) {
+function HomePage({ onLoginClick, onTrialLimitReached }) {
   const [generatedFortune, setGeneratedFortune] = useState(null);
   const { user } = useAuth();
 
@@ -1380,7 +1481,11 @@ function HomePage({ onLoginClick }) {
     <div className="app">
       <Navigation onLoginClick={onLoginClick} />
       <HeroSection onGetStarted={onLoginClick} user={user} />
-      <FortuneFormSection onFortuneGenerated={handleFortuneGenerated} />
+      <FortuneFormSection 
+        onFortuneGenerated={handleFortuneGenerated} 
+        onLoginRequired={onLoginClick}
+        onTrialLimitReached={onTrialLimitReached}
+      />
       <FortuneResultsSection generatedFortune={generatedFortune} />
       <WhyDecodeBaZiSection />
       <WhyBaziSection />
@@ -1471,10 +1576,97 @@ function DashboardPage() {
   );
 }
 
+function SubscriptionModal({ isOpen, onClose, onLogin, user }) {
+  const [loading, setLoading] = useState(false);
+
+  const handleSubscribe = async () => {
+    if (!user) return onLogin();
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('bazi_token');
+      const res = await fetch(`${API_BASE_URL}/api/stripe/checkout-session`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : '',
+        },
+        body: JSON.stringify({ email: user.email, userId: user.id }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert('Failed to start checkout. Please try again.');
+      }
+    } catch (e) {
+      alert('Error: ' + e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="auth-modal-overlay" onClick={onClose}>
+      <div className="subscription-modal" onClick={(e) => e.stopPropagation()}>
+        <button className="subscription-modal-close" onClick={onClose}>×</button>
+
+        <div className="subscription-modal-glow" />
+
+        <div className="subscription-modal-plan">Plus</div>
+        <div className="subscription-modal-price-row">
+          <span className="subscription-modal-price">$5</span>
+          <span className="subscription-modal-period">/ month</span>
+        </div>
+
+        <button
+          className="subscription-modal-cta"
+          onClick={handleSubscribe}
+          disabled={loading}
+        >
+          {!user ? 'Login to Subscribe' : loading ? 'Loading...' : 'Subscribe Now'}
+        </button>
+
+        <ul className="subscription-modal-features">
+          <li>Unlimited fortune generations</li>
+          <li>All fortune categories unlocked</li>
+          <li>Personalized full reading access</li>
+          <li>Priority premium experience</li>
+        </ul>
+
+        <p className="subscription-modal-footnote">
+          Guest: 3 free • Logged-in free: 5 free • Subscriber: unlimited
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // Wrapper component to pass props to HomePage
 function HomePageWrapper() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState('login');
+  const [subscriptionMessage, setSubscriptionMessage] = useState(null);
+  const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    const sub = searchParams.get('subscription');
+    if (sub === 'success') {
+      setSubscriptionMessage({ type: 'success', text: 'Subscription activated! You now have unlimited access.' });
+      localStorage.setItem('bazi_subscription_status', 'active');
+      // Clear the query param
+      searchParams.delete('subscription');
+      searchParams.delete('session_id');
+      setSearchParams(searchParams);
+    } else if (sub === 'cancel') {
+      setSubscriptionMessage({ type: 'info', text: 'Subscription cancelled. You can subscribe anytime.' });
+      searchParams.delete('subscription');
+      setSearchParams(searchParams);
+    }
+  }, [searchParams, setSearchParams]);
 
   const openLogin = () => {
     setAuthMode('login');
@@ -1490,13 +1682,47 @@ function HomePageWrapper() {
     setIsAuthModalOpen(false);
   };
 
+  const openSubscription = () => {
+    setIsSubscriptionModalOpen(true);
+  };
+
+  const closeSubscription = () => {
+    setIsSubscriptionModalOpen(false);
+  };
+
   return (
     <>
-      <HomePage onLoginClick={openLogin} />
+      {subscriptionMessage && (
+        <div style={{
+          position: 'fixed',
+          top: 80,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: subscriptionMessage.type === 'success' ? '#22c55e' : '#3b82f6',
+          color: 'white',
+          padding: '12px 24px',
+          borderRadius: '8px',
+          zIndex: 10001,
+          fontWeight: 600,
+        }}>
+          {subscriptionMessage.text}
+          <button onClick={() => setSubscriptionMessage(null)} style={{ marginLeft: 12, background: 'transparent', border: 'none', color: 'white', cursor: 'pointer' }}>×</button>
+        </div>
+      )}
+      <HomePage onLoginClick={openLogin} onTrialLimitReached={openSubscription} />
       <AuthModal 
         isOpen={isAuthModalOpen} 
         onClose={closeAuthModal} 
         defaultMode={authMode}
+      />
+      <SubscriptionModal
+        isOpen={isSubscriptionModalOpen}
+        onClose={closeSubscription}
+        onLogin={() => {
+          closeSubscription();
+          openLogin();
+        }}
+        user={user}
       />
     </>
   );
@@ -1525,8 +1751,10 @@ function VerifyEmailPage() {
     const result = await verifyEmail(token);
     if (result.success) {
       setStatus('success');
-      setMessage('Your email has been verified successfully! Redirecting...');
-      setTimeout(() => navigate('/'), 2000);
+      setMessage('Your email has been verified successfully! Redirecting you to the fortune form...');
+      setTimeout(() => {
+        window.location.href = '/#features';
+      }, 2000);
     } else {
       setStatus('error');
       setMessage(result.error || 'Verification failed. The link may have expired.');
